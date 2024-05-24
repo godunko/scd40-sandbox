@@ -1,0 +1,23 @@
+name = "sdc40_sandbox"
+description = "sdc40_sandbox"
+version = "0.1.0-dev"
+
+authors = ["Vadim Godunko"]
+maintainers = ["Vadim Godunko <vgodunko@gmail.com>"]
+maintainers-logins = ["godunko"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+tags = ["embedded"]
+
+project-files = ["gnat/sdc40_sandbox.gpr"]
+
+[configuration]
+#disabled = true
+
+[[depends-on]]
+a0b_armv7m_systick_clock_timer = "*"
+a0b_callbacks = "*"
+a0b_svd_stm32h723 = "*"
+#a0b_time = "*"
+a0b_timer = "*"
+light_fk723m1_zgt6 = "~0.2.0"
+#a0b_base = "*"
