@@ -1,0 +1,56 @@
+--
+--  Copyright (C) 2024, Vadim Godunko <vgodunko@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
+with "../config/sdc40_sandbox_config.gpr";
+
+with "fk723m1_zgt6_startup.gpr";
+
+--  with "a0b_common";
+
+project SDC40_Sandbox is
+
+   for Target use FK723M1_ZGT6_Startup'Target;
+   for Runtime use FK723M1_ZGT6_Startup'Runtime;
+
+   for Source_Dirs use ("../source");
+   for Object_Dir use "../.objs/" & SDC40_Sandbox_Config.Build_Profile;
+   for Exec_Dir use "../bin";
+   for Main use ("scd40_sandbox-main.adb");
+
+   package Builder is
+      for Executable ("scd40_sandbox-main.adb") use "scd40_sandbox.elf";
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        SDC40_Sandbox_Config.Ada_Compiler_Switches
+        & ("-O2");
+   end Compiler;
+
+   package Linker is
+      for Switches ("Ada") use
+        FK723M1_ZGT6_Startup.Linker_Switches
+         & ("-Wl,--gc-sections");
+   end Linker;
+
+--     for Object_Dir use "../.objs/" & A0B_Common.Object_Dir_Suffix;
+--
+--     package Compiler is
+--        for Switches ("Ada") use A0B_Common.Compiler_Switches_Ada;
+--     end Compiler;
+
+--     for Source_Dirs use ("../source/", "../source/stm32h723/", "../config/");
+--     for Create_Missing_Dirs use "True";
+
+--     package Binder is
+--        for Switches ("Ada") use ("-Es"); --  Symbolic traceback
+--     end Binder;
+
+--     package Install is
+--        for Artifacts (".") use ("share");
+--     end Install;
+
+end SDC40_Sandbox;
