@@ -12,7 +12,7 @@ with A0B.ARMv7M.NVIC_Utilities;
 with A0B.Callbacks.Generic_Non_Dispatching;
 with A0B.Time;
 
-package body SCD40_Sandbox.I2C is
+package body A0B.STM32H723.I2C is
 
    procedure On_Transfer_Delay (Self : in out I2C_Slave_Device'Class);
 
@@ -656,4 +656,4 @@ package body SCD40_Sandbox.I2C is
    --     end loop;
    --  end Write_Read;
 
-end SCD40_Sandbox.I2C;
+end A0B.STM32H723.I2C;

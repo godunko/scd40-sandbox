@@ -6,7 +6,7 @@
 
 with A0B.Types;
 
-with SCD40_Sandbox.I2C;
+with A0B.STM32H723.I2C;
 
 package A0B.SCD40
   with Preelaborate
@@ -21,7 +21,7 @@ is
    --
 
    subtype Start_Periodic_Measument_Command
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 1);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
 
    procedure Build_Start_Periodic_Measument_Command
      (Buffer : out Start_Periodic_Measument_Command);
@@ -29,10 +29,10 @@ is
    --
 
    subtype Read_Measurement_Command
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 1);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
 
    subtype Read_Measurement_Response
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 8);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 8);
 
    procedure Build_Read_Measurement_Command
      (Buffer : out Read_Measurement_Command);
@@ -47,10 +47,10 @@ is
    --
 
    subtype Get_Data_Ready_Status_Command
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 1);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
 
    subtype Get_Data_Ready_Status_Response
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 2);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 2);
 
    procedure Build_Get_Data_Ready_Status_Command
      (Buffer : out Get_Data_Ready_Status_Command);
@@ -63,10 +63,10 @@ is
    --  3.9.2 get_serial_number
 
    subtype Get_Serial_Number_Command
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 1);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
 
    subtype Get_Serial_Number_Response
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 8);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 8);
 
    type Serial_Number is mod 2 ** 48;
 
@@ -81,7 +81,7 @@ is
    --  3.9.4 perfom_factory_reset
 
    subtype Perfom_Factory_Reset_Command
-     is SCD40_Sandbox.I2C.Unsigned_8_Array (0 .. 1);
+     is A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
 
    procedure Build_Perfom_Factory_Reset_Command
      (Buffer : out Perfom_Factory_Reset_Command);

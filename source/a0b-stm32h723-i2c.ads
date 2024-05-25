@@ -13,10 +13,10 @@ private with System.Storage_Elements;
 with A0B.ARMv7M;
 with A0B.Callbacks;
 with A0B.SVD.STM32H723.I2C;
-with A0B.STM32H723;
 private with A0B.Timer;
+with A0B.Types;
 
-package SCD40_Sandbox.I2C
+package A0B.STM32H723.I2C
   with Preelaborate
 is
 
@@ -129,4 +129,4 @@ private
    --  Called when transaction is completed (STOP condition is send) and
    --  bus is released.
 
-end SCD40_Sandbox.I2C;
+end A0B.STM32H723.I2C;

@@ -11,9 +11,9 @@ with A0B.SCD40;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.I2C;  use A0B.SVD.STM32H723.I2C;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
+with A0B.STM32H723.I2C.I2C4; use A0B.STM32H723.I2C.I2C4;
 
 with SCD40_Sandbox.Display;
-with SCD40_Sandbox.I2C.I2C4; use SCD40_Sandbox.I2C.I2C4;
 with SCD40_Sandbox.Globals;
 
 procedure SCD40_Sandbox.Main is
@@ -34,7 +34,7 @@ procedure SCD40_Sandbox.Main is
    Idle     : A0B.Types.Unsigned_64 := 0 with Volatile;
 
    SCD40_Sensor_Slave :
-     SCD40_Sandbox.I2C.I2C_Slave_Device (I2C4'Access, SCD40_I2C_Address);
+     A0B.STM32H723.I2C.I2C_Slave_Device (I2C4'Access, SCD40_I2C_Address);
 
    procedure Start_Periodic_Measurement;
 
