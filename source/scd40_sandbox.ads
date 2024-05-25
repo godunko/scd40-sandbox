@@ -11,14 +11,9 @@ package SCD40_Sandbox
   with Preelaborate
 is
 
-   Device_Id_I2C_Address : constant A0B.Types.Unsigned_7 := 2#1111_100#;
-   SCD40_I2C_Address     : constant A0B.Types.Unsigned_7 := 16#62#;
-   BNO055_I2C_Address    : constant A0B.Types.Unsigned_7 := 16#29#;
-   MPU6XXX_Address       : constant A0B.Types.Unsigned_7 := 16#68#;
-
-   B1 : A0B.Types.Unsigned_8;
-   B2 : A0B.Types.Unsigned_8;
-   B3 : A0B.Types.Unsigned_8;
+   SCD40_I2C_Address  : constant A0B.Types.Unsigned_7 := 16#62#;
+   BME280_I2C_Address : constant A0B.Types.Unsigned_7 := 16#76#;
+   BH1750_Address     : constant A0B.Types.Unsigned_7 := 16#23#;
 
 private
 
@@ -26,8 +21,5 @@ private
 
    package Callbacks is
      new A0B.Callbacks.Generic_Parameterless (On_Done);
-
-   --  Serial_Response : A0B.SCD40.Get_Data_Ready_Status_Response;
-   --  Serail          : A0B.SCD40.Serial_Number;
 
 end SCD40_Sandbox;

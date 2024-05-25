@@ -7,18 +7,22 @@
 pragma Ada_2022;
 
 with A0B.ARMv7M.SysTick;
+with A0B.Delays;
 with A0B.SCD40;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.I2C;  use A0B.SVD.STM32H723.I2C;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.STM32H723.I2C.I2C4; use A0B.STM32H723.I2C.I2C4;
+with A0B.Time;
 
+with SCD40_Sandbox.Await;
+with SCD40_Sandbox.BME280;
 with SCD40_Sandbox.Display;
 with SCD40_Sandbox.Globals;
 
 procedure SCD40_Sandbox.Main is
 
-   use type A0B.Types.Unsigned_64;
+   --  use type A0B.Types.Unsigned_64;
 
    --  Device_Address : constant A0B.Types.Unsigned_7 := MPU6XXX_Address;
    --  Register_Address : constant A0B.Types.Unsigned_8 := 117;
@@ -31,7 +35,7 @@ procedure SCD40_Sandbox.Main is
    --  CRC        : A0B.Types.Unsigned_8 with Volatile;
 
    --  Ready    : Boolean := False with Volatile;
-   Idle     : A0B.Types.Unsigned_64 := 0 with Volatile;
+   --  Idle     : A0B.Types.Unsigned_64 := 0 with Volatile;
 
    SCD40_Sensor_Slave :
      A0B.STM32H723.I2C.I2C_Slave_Device (I2C4'Access, SCD40_I2C_Address);
@@ -148,6 +152,60 @@ procedure SCD40_Sandbox.Main is
       end if;
    end Read_Measurement;
 
+   --------------------------
+   -- Set_Ambient_Pressure --
+   --------------------------
+
+   procedure Set_Ambient_Pressure (To : A0B.Types.Unsigned_32) is
+      Command : A0B.SCD40.Set_Ambient_Pressure_Command;
+      Await   : aliased SCD40_Sandbox.Await.Await;
+      Success : Boolean := True;
+
+   begin
+      A0B.SCD40.Build_Set_Ambient_Pressure_Command (Command, To);
+
+      SCD40_Sensor_Slave.Write
+        (Command, SCD40_Sandbox.Await.Create_Callback (Await), Success);
+
+      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
+   end Set_Ambient_Pressure;
+
+   -------------------------
+   -- Set_Sensor_Altitude --
+   -------------------------
+
+   procedure Set_Sensor_Altitude (To : A0B.Types.Unsigned_16) is
+      Command : A0B.SCD40.Set_Sensor_Altitude_Command;
+      Await   : aliased SCD40_Sandbox.Await.Await;
+      Success : Boolean := True;
+
+   begin
+      A0B.SCD40.Build_Set_Sensor_Altitude_Command (Command, To);
+
+      SCD40_Sensor_Slave.Write
+        (Command, SCD40_Sandbox.Await.Create_Callback (Await), Success);
+
+      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
+   end Set_Sensor_Altitude;
+
+   ----------------------------
+   -- Set_Temperature_Offset --
+   ----------------------------
+
+   procedure Set_Temperature_Offset (To : A0B.Types.Unsigned_16) is
+      Command : A0B.SCD40.Set_Temperature_Offset_Command;
+      Await   : aliased SCD40_Sandbox.Await.Await;
+      Success : Boolean := True;
+
+   begin
+      A0B.SCD40.Build_Set_Temperature_Offset_Command (Command, To);
+
+      SCD40_Sensor_Slave.Write
+        (Command, SCD40_Sandbox.Await.Create_Callback (Await), Success);
+
+      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
+   end Set_Temperature_Offset;
+
    --------------------------------
    -- Start_Periodic_Measurement --
    --------------------------------
@@ -169,8 +227,6 @@ procedure SCD40_Sandbox.Main is
 
 begin
    A0B.ARMv7M.SysTick.Initialize (True, 520_000_000);
-
-   SCD40_Sandbox.Display.Initialize;
 
    --  Select I2C4 clock source
 
@@ -225,6 +281,17 @@ begin
 
    ---------------------------------------------------------------------------
 
+   SCD40_Sandbox.Display.Initialize;
+   SCD40_Sandbox.BME280.Initialize;
+
+   SCD40_Sandbox.BME280.Configure
+     (Mode                     => BME280.Normal,
+      Pressure_Oversampling    => 16,
+      Temperature_Oversampling => 16,
+      Humidity_Oversampling    => 16);
+
+   ---------------------------------------------------------------------------
+
    --  Write_Data (0) := Register_Address;
    --  Write_Data (0) := 16#36#;
    --  Write_Data (1) := 16#82#;
@@ -240,10 +307,17 @@ begin
    --     Read_Data);
 
    Get_Serial_Number;
+   A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
-   for J in 1 .. 52_000_000 loop
-      Idle := @ + 1;
-   end loop;
+   --  for J in 1 .. 52_000_000 loop
+   --     Idle := @ + 1;
+   --  end loop;
+
+   Set_Sensor_Altitude (550);
+   A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
+
+   Set_Temperature_Offset (0);
+   A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
    --  Perfom_Factory_Reset;
    --
@@ -254,16 +328,39 @@ begin
    Start_Periodic_Measurement;
 
    loop
-      for J in 1 .. 500_000_000 loop
-         Idle := @ + 1;
-      end loop;
+      A0B.Delays.Delay_For (A0B.Time.Seconds (1));
+      --  for J in 1 .. 500_000_000 loop
+      --     Idle := @ + 1;
+      --  end loop;
 
       Get_Data_Ready_Status;
 
       if Globals.Ready then
+         declare
+            Data : constant SCD40_Sandbox.BME280.Sensor_Data
+              := BME280.Get_Sensor_Data;
+
+         begin
+            BME280.Get_Compensated
+              (Data        => Data,
+               Pressure    => Globals.Pressure,
+               Temperature => Globals.Temperature,
+               Humitidy    => Globals.Humidity);
+         end;
+
+         --  Set_Ambient_Pressure
+         --    (A0B.Types.Unsigned_32'Min
+         --       (110_000,
+         --        A0B.Types.Unsigned_32'Max
+         --          (70_100, A0B.Types.Unsigned_32 (Globals.Pressure))));
+         --  A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
+
          Read_Measurement;
 
-         SCD40_Sandbox.Display.Redraw (Globals.CO2, Globals.T, Globals.RH);
+         SCD40_Sandbox.Display.Redraw
+           (CO2_Concentration => Globals.CO2,
+            Temperature       => Globals.T,
+            Humidity          => Globals.RH);
       end if;
    end loop;
 

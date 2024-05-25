@@ -50,6 +50,73 @@ package body A0B.SCD40 is
       Buffer (1) := 16#82#;
    end Build_Serial_Number_Command;
 
+   ----------------------------------------
+   -- Build_Set_Ambient_Pressure_Command --
+   ----------------------------------------
+
+   procedure Build_Set_Ambient_Pressure_Command
+     (Buffer   : out Set_Ambient_Pressure_Command;
+      Pressure : A0B.Types.Unsigned_32)
+   is
+      use type A0B.Types.Unsigned_32;
+
+      Value : constant A0B.Types.Unsigned_16 :=
+        A0B.Types.Unsigned_16 (Pressure / 100);
+      H     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (A0B.Types.Shift_Right (Value, 8));
+      L     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (Value and 16#FF#);
+
+   begin
+      Buffer (0) := 16#E0#;
+      Buffer (1) := 16#00#;
+      Buffer (2) := H;
+      Buffer (3) := L;
+      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
+   end Build_Set_Ambient_Pressure_Command;
+
+   ---------------------------------------
+   -- Build_Set_Sensor_Altitude_Command --
+   ---------------------------------------
+
+   procedure Build_Set_Sensor_Altitude_Command
+     (Buffer   : out Set_Sensor_Altitude_Command;
+      Altitude : A0B.Types.Unsigned_16)
+   is
+      H     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (A0B.Types.Shift_Right (Altitude, 8));
+      L     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (Altitude and 16#FF#);
+
+   begin
+      Buffer (0) := 16#24#;
+      Buffer (1) := 16#27#;
+      Buffer (2) := H;
+      Buffer (3) := L;
+      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
+   end Build_Set_Sensor_Altitude_Command;
+
+   ------------------------------------------
+   -- Build_Set_Temperature_Offset_Command --
+   ------------------------------------------
+
+   procedure Build_Set_Temperature_Offset_Command
+     (Buffer   : out Set_Temperature_Offset_Command;
+      Altitude : A0B.Types.Unsigned_16)
+   is
+      H     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (A0B.Types.Shift_Right (Altitude, 8));
+      L     : constant A0B.Types.Unsigned_8 :=
+        A0B.Types.Unsigned_8 (Altitude and 16#FF#);
+
+   begin
+      Buffer (0) := 16#24#;
+      Buffer (1) := 16#1D#;
+      Buffer (2) := H;
+      Buffer (3) := L;
+      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
+   end Build_Set_Temperature_Offset_Command;
+
    ------------------------------------
    -- Build_Read_Measurement_Command --
    ------------------------------------

@@ -44,6 +44,42 @@ is
       RH      : out A0B.Types.Unsigned_16;
       Success : in out Boolean);
 
+   --  3.6.1 set_temperature_offset
+
+   subtype Set_Temperature_Offset_Command is
+     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 4);
+
+   procedure Build_Set_Temperature_Offset_Command
+     (Buffer   : out Set_Temperature_Offset_Command;
+      Altitude : A0B.Types.Unsigned_16);
+   --  Set temperature offset inside the customer device.
+   --
+   --  Value should be in range 0 .. 20 degrees of Celsius.
+
+   --  3.6.3 set_sensor_altitude
+
+   subtype Set_Sensor_Altitude_Command is
+     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 4);
+
+   procedure Build_Set_Sensor_Altitude_Command
+     (Buffer   : out Set_Sensor_Altitude_Command;
+      Altitude : A0B.Types.Unsigned_16);
+   --  Set altitude in meters.
+   --
+   --  Value should be in range 0 .. 3_000 m.
+
+   --  3.6.5 set_ambient_pressure
+
+   subtype Set_Ambient_Pressure_Command is
+     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 4);
+
+   procedure Build_Set_Ambient_Pressure_Command
+     (Buffer   : out Set_Ambient_Pressure_Command;
+      Pressure : A0B.Types.Unsigned_32);
+   --  Pressure is specified in Pa.
+   --
+   --  Value should be in range 70_000 .. 110_000 Pa.
+
    --
 
    subtype Get_Data_Ready_Status_Command

@@ -6,6 +6,7 @@
 
 pragma Ada_2022;
 
+with Interfaces;
 with System.Storage_Elements;
 
 with A0B.ARMv7M.Memory_Protection_Unit;
@@ -14,6 +15,8 @@ with A0B.SVD.STM32H723.FMC;  use A0B.SVD.STM32H723.FMC;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time.Clock;
+
+with SCD40_Sandbox.Globals;
 
 package body SCD40_Sandbox.Display is
 
@@ -72,9 +75,10 @@ package body SCD40_Sandbox.Display is
    --  type Unsigned_1_Array is
    --    array (A0B.Types.Unsigned_32 range <>) of A0B.Types.Unsigned_1;
 
-   C_RGB : constant := 16#001F#;
+   C_RGB : constant := 16#FFC0#;
    T_RGB : constant := 16#07E0#;
    H_RGB : constant := 16#F800#;
+   P_RGB : constant := 16#001F#;
 
    Clear_Duration : A0B.Time.Duration with Volatile;
 
@@ -82,6 +86,7 @@ package body SCD40_Sandbox.Display is
       C : A0B.Types.Unsigned_16;
       T : A0B.Types.Unsigned_16;
       H : A0B.Types.Unsigned_16;
+      P : A0B.Types.Unsigned_16;
    end record;
 
    Points : array (A0B.Types.Unsigned_16 range 0 .. 799) of Point :=
@@ -729,6 +734,7 @@ package body SCD40_Sandbox.Display is
    is
       use type A0B.Types.Integer_32;
       use type A0B.Types.Unsigned_16;
+      use type Interfaces.IEEE_Float_64;
 
       ----------
       -- Draw --
@@ -858,6 +864,21 @@ package body SCD40_Sandbox.Display is
              (479 - ((479 - 0) * (V32 - L) / (H - L)));
       end Map;
 
+      function Map
+        (L : A0B.Types.Integer_32;
+         H : A0B.Types.Integer_32;
+         V : A0B.Types.Integer_32) return A0B.Types.Unsigned_16
+      is
+         --  L32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (L);
+         --  H32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (H);
+         --  V32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (V);
+
+      begin
+         return
+           A0B.Types.Unsigned_16
+             (479 - ((479 - 0) * (V - L) / (H - L)));
+      end Map;
+
       --  Text : constant String := "0123456789";
 
       --  X    : constant A0B.Types.Unsigned_16 := 0;
@@ -867,13 +888,26 @@ package body SCD40_Sandbox.Display is
       T : constant String := A0B.Types.Unsigned_16'Image (Temperature);
       H : constant String := A0B.Types.Unsigned_16'Image (Humidity);
 
+      BPP : constant String :=
+        A0B.Types.Unsigned_32'Image (A0B.Types.Unsigned_32 (Globals.Pressure));
+      BPM : constant String :=
+        A0B.Types.Unsigned_32'Image
+          (A0B.Types.Unsigned_32 (Globals.Pressure * 0.00750062));
+      BT : constant String :=
+        A0B.Types.Unsigned_32'Image
+          (A0B.Types.Unsigned_32 (Globals.Temperature));
+      BH : constant String :=
+        A0B.Types.Unsigned_32'Image (A0B.Types.Unsigned_32 (Globals.Humidity));
+
       CG : constant A0B.Types.Unsigned_16 := Map (0, 2_000, CO2_Concentration);
       TG : constant A0B.Types.Unsigned_16 := Map (-20, 80, Temperature);
       HG : constant A0B.Types.Unsigned_16 := Map (0, 100, Humidity);
+      PG : constant A0B.Types.Unsigned_16 :=
+        Map (30_000, 110_000, A0B.Types.Integer_32 (Globals.Pressure));
 
    begin
       Points (0 .. 798) := Points (1 .. 799);
-      Points (799) := (CG, TG, HG);
+      Points (799) := (CG, TG, HG, PG);
 
       Clear;
 
@@ -886,12 +920,20 @@ package body SCD40_Sandbox.Display is
 
          Set_Draw_Rectangle (J, Points (J).T, 1, 1);
          Command_Write (RAMWR, T_RGB);
+
+         Set_Draw_Rectangle (J, Points (J).P, 1, 1);
+         Command_Write (RAMWR, P_RGB);
       end loop;
 
       --  Draw (X, Y, Text);
       Draw (100, 100, C_RGB, C);
       Draw (100, 200, T_RGB, T & "C");
       Draw (100, 300, H_RGB, H & "%");
+
+      Draw (600, 200, T_RGB, BT & "C");
+      Draw (600, 300, H_RGB, BH & "%");
+      Draw (600, 400, P_RGB, BPP);
+      Draw (700, 450, P_RGB, BPM);
    end Redraw;
 
    -----------

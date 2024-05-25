@@ -4,6 +4,8 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with Interfaces;
+
 with A0B.SCD40;
 
 package SCD40_Sandbox.Globals
@@ -17,8 +19,12 @@ is
    Ready          : Boolean := False;
 
    Measurement_Response : A0B.SCD40.Read_Measurement_Response;
-   CO2                  : A0B.Types.Unsigned_16 with Volatile;
-   T                    : A0B.Types.Unsigned_16 with Volatile;
-   RH                   : A0B.Types.Unsigned_16 with Volatile;
+   CO2                  : A0B.Types.Unsigned_16 := 0 with Volatile;
+   T                    : A0B.Types.Unsigned_16 := 0 with Volatile;
+   RH                   : A0B.Types.Unsigned_16 := 0 with Volatile;
+
+   Pressure             : Interfaces.IEEE_Float_64 := 0.0 with Volatile;
+   Temperature          : Interfaces.IEEE_Float_64 := 0.0 with Volatile;
+   Humidity             : Interfaces.IEEE_Float_64 := 0.0 with Volatile;
 
 end SCD40_Sandbox.Globals;
