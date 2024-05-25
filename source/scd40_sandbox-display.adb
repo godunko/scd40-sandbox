@@ -14,7 +14,7 @@ with A0B.Callbacks.Generic_Parameterless;
 with A0B.SVD.STM32H723.FMC;  use A0B.SVD.STM32H723.FMC;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
-with A0B.Time;
+with A0B.Time.Clock;
 with A0B.Timer;
 
 package body SCD40_Sandbox.Display is
@@ -87,6 +87,8 @@ package body SCD40_Sandbox.Display is
    C_RGB : constant := 16#001F#;
    T_RGB : constant := 16#07E0#;
    H_RGB : constant := 16#F800#;
+
+   Clear_Duration : A0B.Time.Duration with Volatile;
 
    type Point is record
       C : A0B.Types.Unsigned_16;
@@ -360,6 +362,10 @@ package body SCD40_Sandbox.Display is
    -----------
 
    procedure Clear is
+      use type A0B.Time.Monotonic_Time;
+
+      Start : constant A0B.Time.Monotonic_Time := A0B.Time.Clock;
+
    begin
       Set_Draw_Rectangle (0, 0, 800, 480);
       --  Command_Write (CASET0, 16#00#);
@@ -379,6 +385,8 @@ package body SCD40_Sandbox.Display is
       for J in 1 .. 800 * 480 loop
          Write (16#0000#);
       end loop;
+
+      Clear_Duration := A0B.Time.To_Duration (A0B.Time.Clock - Start);
    end Clear;
 
    -------------
@@ -764,9 +772,10 @@ package body SCD40_Sandbox.Display is
       ----------
 
       procedure Draw
-        (X    : A0B.Types.Unsigned_16;
-         Y    : A0B.Types.Unsigned_16;
-         Text : String)
+        (X     : A0B.Types.Unsigned_16;
+         Y     : A0B.Types.Unsigned_16;
+         Color : A0B.Types.Unsigned_16;
+         Text  : String)
       is
 
          --  Line_Height : constant := 37;
@@ -830,7 +839,7 @@ package body SCD40_Sandbox.Display is
 
                   Write
                     (if (Aux and 2#1000_0000#) /= 0
-                       then 16#FFFF#
+                       then Color
                        else 16#0000#);
 
                   Aux := A0B.Types.Shift_Left (@, 1);
@@ -907,19 +916,19 @@ package body SCD40_Sandbox.Display is
 
       for J in Points'Range loop
          Set_Draw_Rectangle (J, Points (J).C, 1, 1);
-         Command_Write (RAMWR, 16#001F#);
+         Command_Write (RAMWR, C_RGB);
 
          Set_Draw_Rectangle (J, Points (J).H, 1, 1);
-         Command_Write (RAMWR, 16#07E0#);
+         Command_Write (RAMWR, H_RGB);
 
          Set_Draw_Rectangle (J, Points (J).T, 1, 1);
-         Command_Write (RAMWR, 16#F800#);
+         Command_Write (RAMWR, T_RGB);
       end loop;
 
       --  Draw (X, Y, Text);
-      Draw (100, 100, C);
-      Draw (100, 200, T & "C");
-      Draw (100, 300, H & "%");
+      Draw (100, 100, C_RGB, C);
+      Draw (100, 200, T_RGB, T & "C");
+      Draw (100, 300, H_RGB, H & "%");
    end Redraw;
 
    -----------
