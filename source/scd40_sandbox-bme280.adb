@@ -253,8 +253,8 @@ is
       Command     : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
       Response_00 : CALIB00_CALIB25_Response;
       Response_26 : CALIB26_CALIB41_Response;
-      Success  : Boolean := True;
-      Await    : aliased SCD40_Sandbox.Await.Await;
+      Success     : Boolean := True;
+      Await       : aliased SCD40_Sandbox.Await.Await;
 
    begin
       Command (0) := CALIB00_Address;
