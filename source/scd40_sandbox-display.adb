@@ -8,14 +8,12 @@ pragma Ada_2022;
 
 with System.Storage_Elements;
 
-with A0B.ARMv7M.CMSIS;
 with A0B.ARMv7M.Memory_Protection_Unit;
-with A0B.Callbacks.Generic_Parameterless;
+with A0B.Delays;
 with A0B.SVD.STM32H723.FMC;  use A0B.SVD.STM32H723.FMC;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time.Clock;
-with A0B.Timer;
 
 package body SCD40_Sandbox.Display is
 
@@ -67,16 +65,6 @@ package body SCD40_Sandbox.Display is
      with Import,
           Convention => C,
           Address    => System.Storage_Elements.To_Address (16#6000_0020#);
-
-   procedure Delay_For (Interval : A0B.Time.Time_Span);
-
-   procedure On_Delay;
-
-   package On_Delay_Callbacks is
-     new A0B.Callbacks.Generic_Parameterless (On_Delay);
-
-   Delay_Timeout : aliased A0B.Timer.Timeout_Control_Block;
-   Delay_Done    : Boolean := True with Volatile;
 
    procedure Clear;
    --  Clear content of the screen.
@@ -696,22 +684,6 @@ package body SCD40_Sandbox.Display is
       end loop;
    end Configure_PLL2;
 
-   ---------------
-   -- Delay_For --
-   ---------------
-
-   procedure Delay_For (Interval : A0B.Time.Time_Span) is
-   begin
-      Delay_Done := False;
-
-      A0B.Timer.Enqueue
-        (Delay_Timeout, On_Delay_Callbacks.Create_Callback, Interval);
-
-      while not Delay_Done loop
-         A0B.ARMv7M.CMSIS.Wait_For_Interrupt;
-      end loop;
-   end Delay_For;
-
    ----------------
    -- Initialize --
    ----------------
@@ -727,10 +699,10 @@ package body SCD40_Sandbox.Display is
       --  Delay_For (Microseconds (10));
       --  Reset_High;
 
-      Delay_For (A0B.Time.Milliseconds (120));
+      A0B.Delays.Delay_For (A0B.Time.Milliseconds (120));
 
       Command (SLPOUT);
-      Delay_For (A0B.Time.Milliseconds (120));
+      A0B.Delays.Delay_For (A0B.Time.Milliseconds (120));
 
       Command_Write (MADCTL, 2#0110_0000#);
       --  Column Address Order: reverted
@@ -745,15 +717,6 @@ package body SCD40_Sandbox.Display is
 
       Command (DISPON);
    end Initialize;
-
-   --------------
-   -- On_Delay --
-   --------------
-
-   procedure On_Delay is
-   begin
-      Delay_Done := True;
-   end On_Delay;
 
    ------------
    -- Redraw --
