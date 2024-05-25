@@ -52,17 +52,6 @@ is
       Done         : A0B.Callbacks.Callback;
       Success      : in out Boolean);
 
-   --  procedure Write
-   --    (Peripheral : in out A0B.SVD.STM32H723.I2C.I2C_Peripheral;
-   --     Device     : A0B.Types.Unsigned_7;
-   --     Write_Data : Unsigned_8_Array);
-
-   --  procedure Write_Read
-   --    (Peripheral : in out A0B.SVD.STM32H723.I2C.I2C_Peripheral;
-   --     Device     : A0B.Types.Unsigned_7;
-   --     Write_Data : Unsigned_8_Array;
-   --     Read_Data  : out Unsigned_8_Array);
-
    subtype I2C4_Controller is I2C_Controller
      (Peripheral      => A0B.SVD.STM32H723.I2C.I2C4_Periph'Access,
       Event_Interrupt => A0B.STM32H723.I2C4_EV,
