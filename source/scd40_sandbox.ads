@@ -13,7 +13,7 @@ is
 
    SCD40_I2C_Address  : constant A0B.Types.Unsigned_7 := 16#62#;
    BME280_I2C_Address : constant A0B.Types.Unsigned_7 := 16#76#;
-   BH1750_Address     : constant A0B.Types.Unsigned_7 := 16#23#;
+   BH1750_I2C_Address : constant A0B.Types.Unsigned_7 := 16#23#;
 
 private
 

@@ -16,6 +16,7 @@ with A0B.STM32H723.I2C.I2C4; use A0B.STM32H723.I2C.I2C4;
 with A0B.Time;
 
 with SCD40_Sandbox.Await;
+with SCD40_Sandbox.BH1750;
 with SCD40_Sandbox.BME280;
 with SCD40_Sandbox.Display;
 with SCD40_Sandbox.Globals;
@@ -283,6 +284,7 @@ begin
 
    SCD40_Sandbox.Display.Initialize;
    SCD40_Sandbox.BME280.Initialize;
+   SCD40_Sandbox.BH1750.Initialize;
 
    SCD40_Sandbox.BME280.Configure
      (Mode                     => BME280.Normal,
@@ -316,8 +318,8 @@ begin
    Set_Sensor_Altitude (550);
    A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
-   Set_Temperature_Offset (0);
-   A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
+   --  Set_Temperature_Offset (0);
+   --  A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
    --  Perfom_Factory_Reset;
    --
@@ -348,6 +350,7 @@ begin
                Humitidy    => Globals.Humidity);
          end;
 
+         Globals.Light := BH1750.Get_Light_Value;
          --  Set_Ambient_Pressure
          --    (A0B.Types.Unsigned_32'Min
          --       (110_000,

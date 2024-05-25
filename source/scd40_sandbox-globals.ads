@@ -27,4 +27,6 @@ is
    Temperature          : Interfaces.IEEE_Float_64 := 0.0 with Volatile;
    Humidity             : Interfaces.IEEE_Float_64 := 0.0 with Volatile;
 
+   Light                : A0B.Types.Unsigned_16 := 0 with Volatile;
+
 end SCD40_Sandbox.Globals;

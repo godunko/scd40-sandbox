@@ -79,6 +79,7 @@ package body SCD40_Sandbox.Display is
    T_RGB : constant := 16#07E0#;
    H_RGB : constant := 16#F800#;
    P_RGB : constant := 16#001F#;
+   L_RGB : constant := 16#D69A#;
 
    Clear_Duration : A0B.Time.Duration with Volatile;
 
@@ -87,6 +88,7 @@ package body SCD40_Sandbox.Display is
       T : A0B.Types.Unsigned_16;
       H : A0B.Types.Unsigned_16;
       P : A0B.Types.Unsigned_16;
+      L : A0B.Types.Unsigned_16;
    end record;
 
    Points : array (A0B.Types.Unsigned_16 range 0 .. 799) of Point :=
@@ -904,10 +906,14 @@ package body SCD40_Sandbox.Display is
       HG : constant A0B.Types.Unsigned_16 := Map (0, 100, Humidity);
       PG : constant A0B.Types.Unsigned_16 :=
         Map (30_000, 110_000, A0B.Types.Integer_32 (Globals.Pressure));
+      LG : constant A0B.Types.Unsigned_16 :=
+        Map (0, 65_535, Globals.Light);
+
+      L : constant String := A0B.Types.Unsigned_16'Image (Globals.Light);
 
    begin
       Points (0 .. 798) := Points (1 .. 799);
-      Points (799) := (CG, TG, HG, PG);
+      Points (799) := (CG, TG, HG, PG, LG);
 
       Clear;
 
@@ -923,12 +929,16 @@ package body SCD40_Sandbox.Display is
 
          Set_Draw_Rectangle (J, Points (J).P, 1, 1);
          Command_Write (RAMWR, P_RGB);
+
+         Set_Draw_Rectangle (J, Points (J).L, 1, 1);
+         Command_Write (RAMWR, L_RGB);
       end loop;
 
       --  Draw (X, Y, Text);
       Draw (100, 100, C_RGB, C);
       Draw (100, 200, T_RGB, T & "C");
       Draw (100, 300, H_RGB, H & "%");
+      Draw (100, 400, L_RGB, L);
 
       Draw (600, 200, T_RGB, BT & "C");
       Draw (600, 300, H_RGB, BH & "%");
