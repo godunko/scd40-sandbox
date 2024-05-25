@@ -37,7 +37,8 @@ is
 
    type I2C_Slave_Device
      (Controller : not null access I2C_Controller'Class;
-      Address    : Address_7) is tagged limited private;
+      Address    : Address_7) is tagged limited private
+        with Preelaborable_Initialization;
 
    procedure Write
      (Self         : in out I2C_Slave_Device'Class;
