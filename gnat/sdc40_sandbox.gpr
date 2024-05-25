@@ -27,7 +27,7 @@ project SDC40_Sandbox is
    package Compiler is
       for Default_Switches ("Ada") use
         SDC40_Sandbox_Config.Ada_Compiler_Switches
-        & ("-O2");
+        & ("-O2", "-gnaty-B");
    end Compiler;
 
    package Linker is
