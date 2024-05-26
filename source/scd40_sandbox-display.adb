@@ -79,6 +79,11 @@ package body SCD40_Sandbox.Display is
    CW : SCD40_Sandbox.Widgets.Widget;
    PW : SCD40_Sandbox.Widgets.Widget;
 
+   Degree_Celsius : aliased constant Wide_String := "℃";
+   Percent        : aliased constant Wide_String := "%";
+   PPM            : aliased constant Wide_String := "PPM";
+   Pa             : aliased constant Wide_String := "Pa";
+
    Clear_Duration : A0B.Time.Duration with Volatile;
 
    -----------
@@ -441,10 +446,10 @@ package body SCD40_Sandbox.Display is
 
       --  Initialize widgets.
 
-      TW.Initialize (10, 50, 380, 180, -20, 60, 'C');
-      HW.Initialize (410, 50, 380, 180, 0, 100, '%');
-      PW.Initialize (10, 250, 380, 180, 60_000, 120_000, ' ');
-      CW.Initialize (410, 250, 380, 180, 300, 2_100, ' ');
+      TW.Initialize (10, 50, 380, 180, -20, 60, Degree_Celsius'Access);
+      HW.Initialize (410, 50, 380, 180, 0, 100, Percent'Access);
+      PW.Initialize (10, 250, 380, 180, 60_000, 120_000, Pa'Access);
+      CW.Initialize (410, 250, 380, 180, 300, 2_100, PPM'Access);
    end Initialize;
 
    ------------
@@ -454,15 +459,17 @@ package body SCD40_Sandbox.Display is
    procedure Redraw is
       use type Interfaces.IEEE_Float_64;
 
-      BPM : constant String :=
-        A0B.Types.Unsigned_32'Image
+      BPM : constant Wide_String :=
+        A0B.Types.Unsigned_32'Wide_Image
           (A0B.Types.Unsigned_32 (Globals.Pressure * 0.00750062));
-      BT : constant String :=
-        A0B.Types.Unsigned_32'Image
+      BT : constant Wide_String :=
+        A0B.Types.Unsigned_32'Wide_Image
           (A0B.Types.Unsigned_32 (Globals.Temperature));
-      BH : constant String :=
-        A0B.Types.Unsigned_32'Image (A0B.Types.Unsigned_32 (Globals.Humidity));
-      L  : constant String := A0B.Types.Unsigned_16'Image (Globals.Light);
+      BH : constant Wide_String :=
+        A0B.Types.Unsigned_32'Wide_Image
+          (A0B.Types.Unsigned_32 (Globals.Humidity));
+      L  : constant Wide_String :=
+        A0B.Types.Unsigned_16'Wide_Image (Globals.Light);
 
    begin
       TW.Draw (A0B.Types.Integer_32 (Globals.T));
@@ -478,9 +485,9 @@ package body SCD40_Sandbox.Display is
       Painter.Set_Color (L_RGB);
       Painter.Draw_Text (20, 475, L);
       Painter.Set_Color (T_RGB);
-      Painter.Draw_Text (250, 475, BT & "C");
+      Painter.Draw_Text (250, 475, BT & " " & Degree_Celsius);
       Painter.Set_Color (H_RGB);
-      Painter.Draw_Text (450, 475, BH & "%");
+      Painter.Draw_Text (450, 475, BH & " " & Percent);
       Painter.Set_Color (P_RGB);
       Painter.Draw_Text (650, 475, BPM);
    end Redraw;

@@ -37,6 +37,6 @@ is
    procedure Draw_Text
      (X    : A0B.Types.Integer_32;
       Y    : A0B.Types.Integer_32;
-      Text : String);
+      Text : Wide_String);
 
 end SCD40_Sandbox.Painter;

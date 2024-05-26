@@ -21,7 +21,7 @@ is
       H    : A0B.Types.Integer_32;
       VL   : A0B.Types.Integer_32;
       VH   : A0B.Types.Integer_32;
-      S    : Character);
+      S    : access constant Wide_String := null);
 
    procedure Draw (Self : in out Widget; Value : A0B.Types.Integer_32);
 
@@ -38,7 +38,7 @@ private
       VH : A0B.Types.Integer_32;
       VL : A0B.Types.Integer_32;
       G  : Y_Array (0 .. 371);
-      S  : Character;
+      S  : access constant Wide_String;
    end record;
 
 end SCD40_Sandbox.Widgets;

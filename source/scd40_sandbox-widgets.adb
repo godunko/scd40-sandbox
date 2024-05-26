@@ -31,9 +31,9 @@ package body SCD40_Sandbox.Widgets is
    procedure Draw (Self : in out Widget; Value : A0B.Types.Integer_32) is
       use type A0B.Types.Integer_32;
 
-      Text        : constant String :=
-        A0B.Types.Integer_32'Image (Value)
-          & (if Self.S = ' ' then "" else " " & Self.S);
+      Text        : constant Wide_String :=
+        A0B.Types.Integer_32'Wide_Image (Value)
+          & (if Self.S = null then "" else " " & Self.S.all);
       Text_Width  : constant A0B.Types.Integer_32 := Text'Length * TW;
       Text_Offset : constant A0B.Types.Integer_32 :=
         (Self.W - Text_Width) / 2;
@@ -90,7 +90,7 @@ package body SCD40_Sandbox.Widgets is
       H    : A0B.Types.Integer_32;
       VL   : A0B.Types.Integer_32;
       VH   : A0B.Types.Integer_32;
-      S    : Character) is
+      S    : access constant Wide_String := null) is
    begin
       Self.X  := X;
       Self.Y  := Y;

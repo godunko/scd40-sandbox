@@ -150,7 +150,7 @@ package body SCD40_Sandbox.Painter is
    procedure Draw_Text
      (X    : A0B.Types.Integer_32;
       Y    : A0B.Types.Integer_32;
-      Text : String)
+      Text : Wide_String)
    is
       use type A0B.Types.Unsigned_16;
       use type A0B.Types.Unsigned_32;
@@ -221,7 +221,7 @@ package body SCD40_Sandbox.Painter is
 
    begin
       for Character of Text loop
-         Code := Standard.Character'Pos (Character);
+         Code := Standard.Wide_Character'Pos (Character);
 
          for J of Active_Font.Map.all loop
             if Code in
