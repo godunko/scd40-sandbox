@@ -14,7 +14,7 @@ is
 
    type Power_Mode is (Sleep, Forced, Normal)
      with Size => 2;
-   for Power_Mode use (Sleep => 16#00#, Forced => 2#10#, Normal => 2#11#);
+   for Power_Mode use (Sleep => 16#00#, Forced => 2#01#, Normal => 2#11#);
 
    type Sensor_Data is private;
 

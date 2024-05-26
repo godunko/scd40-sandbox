@@ -163,7 +163,7 @@ is
             return 0;
 
          elsif Value >= 16 then
-            return 4;
+            return 5;
 
          else
             return
@@ -199,7 +199,8 @@ is
 
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
-      --  Pressure/temperature/mode.
+      --  Pressure/temperature, mode should be set to sleep till configuration
+      --  has been done.
 
       declare
          Ctrl_Meas : Ctrl_Meas_Register
@@ -208,7 +209,7 @@ is
       begin
          Command (0) := CTRL_MEAS_Address;
          Ctrl_Meas   :=
-           (mode   => Mode,
+           (mode   => Sleep,
             osrs_p => To_Oversamplig (Pressure_Oversampling),
             osrs_t => To_Oversamplig (Temperature_Oversampling));
       end;
@@ -232,9 +233,30 @@ is
          Command (0) := CONFIG_Address;
          Config      :=
            (spi3w_en => False,
-            filter   => 1,       --  filter is off
-            t_sb     => 2#100#,  --  mesurement delay is 500 ms
+            filter   => 2#100#,  --  IIR filter is on, 16
+            t_sb     => 2#101#,  --  mesurement delay is 1_000 ms (1.0 s)
             others   => <>);
+      end;
+
+      BME_Sensor_Slave.Write
+        (Command,
+         SCD40_Sandbox.Await.Create_Callback (Await),
+         Success);
+
+      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
+
+      --  Mode
+
+      declare
+         Ctrl_Meas : Ctrl_Meas_Register
+           with Import, Address => Command (1)'Address;
+
+      begin
+         Command (0) := CTRL_MEAS_Address;
+         Ctrl_Meas   :=
+           (mode   => Mode,
+            osrs_p => To_Oversamplig (Pressure_Oversampling),
+            osrs_t => To_Oversamplig (Temperature_Oversampling));
       end;
 
       BME_Sensor_Slave.Write
@@ -437,6 +459,31 @@ is
       Result   : Sensor_Data;
 
    begin
+      --  begin
+      --     declare
+      --        Command  : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
+      --        Ctrl_Meas : Ctrl_Meas_Register
+      --          with Import, Address => Command (1)'Address;
+      --
+      --     begin
+      --        Command (0) := CTRL_MEAS_Address;
+      --        Ctrl_Meas   :=
+      --          (mode   => Forced,
+      --           --  (mode   => Mode,
+      --           osrs_p => 5,
+      --           osrs_t => 5);
+      --
+      --        BME_Sensor_Slave.Write
+      --          (Command,
+      --           SCD40_Sandbox.Await.Create_Callback (Await),
+      --           Success);
+      --
+      --        SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
+      --
+      --        A0B.Delays.Delay_For (A0B.Time.Microseconds (2));
+      --     end;
+      --  end;
+
       Command (0) := PRESS_MSB_Address;
 
       BME_Sensor_Slave.Write_Read
