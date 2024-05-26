@@ -49,10 +49,10 @@ package body SCD40_Sandbox.Widgets is
       Painter.Fill_Rect (Self.X, Self.Y, Self.W, Self.H);
 
       Painter.Set_Color (Label_Background_Color);
-      Painter.Fill_Rect (Self.X + 4, Self.Y + 4, Self.W - 8, 72 - 2);
+      Painter.Fill_Rect (Self.X + 4, Self.Y + 4, Self.W - 8, 68 - 6);
 
       Painter.Set_Color (Label_Line_Color);
-      Painter.Fill_Rect (Self.X + 4, Self.Y + 72 - 2, Self.W - 8, 2);
+      Painter.Fill_Rect (Self.X + 4, Self.Y + 68 - 2, Self.W - 8, 2);
 
       Painter.Set_Color (Label_Text_Color);
       Painter.Draw_Text (Self.X + Text_Offset, Self.Y + 50, Text);
@@ -61,13 +61,13 @@ package body SCD40_Sandbox.Widgets is
          if Self.G (J) in 0 .. 99 then
             Painter.Set_Color (Line_Color);
             Painter.Fill_Rect
-              (Self.X + 4 + J, Self.Y + 80 + Self.G (J), 1, 1);
+              (Self.X + 4 + J, Self.Y + 76 + Self.G (J), 1, 1);
 
             if Self.G (J) < 99 then
                Painter.Set_Color (Fill_Color);
                Painter.Fill_Rect
                  (Self.X + 4 + J,
-                  Self.Y + 80 + Self.G (J) + 1,
+                  Self.Y + 76 + Self.G (J) + 1,
                   1,
                   99 - Self.G (J));
             end if;
