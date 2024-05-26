@@ -67,10 +67,12 @@ package body SCD40_Sandbox.Display is
    --  H_RGB : constant := 16#F800#;
    --  P_RGB : constant := 16#001F#;
    --  L_RGB : constant := 16#D69A#;
-   H_RGB : constant := 16#4288#;
-   T_RGB : constant := 16#4228#;
-   P_RGB : constant := 16#4228#;
-   L_RGB : constant := 16#4228#;
+   --  S_RGB : constant := 16#4228#;
+   S_RGB : constant := 16#9CD3#;
+   H_RGB : constant := S_RGB;
+   T_RGB : constant := S_RGB;
+   P_RGB : constant := S_RGB;
+   L_RGB : constant := S_RGB;
 
    Background_Color : constant := 16#18E3#;
 
@@ -83,6 +85,8 @@ package body SCD40_Sandbox.Display is
    Percent        : aliased constant Wide_String := "%";
    PPM            : aliased constant Wide_String := "PPM";
    Pa             : aliased constant Wide_String := "Pa";
+   lx             : aliased constant Wide_String := "lx";
+   mmHg           : aliased constant Wide_String := "mmHg";
 
    Clear_Duration : A0B.Time.Duration with Volatile;
 
@@ -483,13 +487,13 @@ package body SCD40_Sandbox.Display is
       Painter.Set_Font
         (SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font'Access);
       Painter.Set_Color (L_RGB);
-      Painter.Draw_Text (20, 475, L);
+      Painter.Draw_Text (20, 470, L & " " & lx);
       Painter.Set_Color (T_RGB);
-      Painter.Draw_Text (250, 475, BT & " " & Degree_Celsius);
+      Painter.Draw_Text (250, 470, BT & " " & Degree_Celsius);
       Painter.Set_Color (H_RGB);
-      Painter.Draw_Text (450, 475, BH & " " & Percent);
+      Painter.Draw_Text (450, 470, BH & " " & Percent);
       Painter.Set_Color (P_RGB);
-      Painter.Draw_Text (650, 475, BPM);
+      Painter.Draw_Text (600, 470, BPM & " " & mmHg);
    end Redraw;
 
 end SCD40_Sandbox.Display;
