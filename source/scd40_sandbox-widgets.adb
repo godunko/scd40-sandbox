@@ -4,6 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with SCD40_Sandbox.Fonts.DejaVuSansCondensed_48;
 with SCD40_Sandbox.Painter;
 
 package body SCD40_Sandbox.Widgets is
@@ -55,6 +56,8 @@ package body SCD40_Sandbox.Widgets is
       Painter.Fill_Rect (Self.X + 4, Self.Y + 68 - 2, Self.W - 8, 2);
 
       Painter.Set_Color (Label_Text_Color);
+      Painter.Set_Font
+        (SCD40_Sandbox.Fonts.DejaVuSansCondensed_48.Font'Access);
       Painter.Draw_Text (Self.X + Text_Offset, Self.Y + 50, Text);
 
       for J in 0 .. Self.W - 1 - 8 loop

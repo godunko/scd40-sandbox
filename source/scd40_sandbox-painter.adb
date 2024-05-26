@@ -11,6 +11,7 @@ with System.Storage_Elements;
 package body SCD40_Sandbox.Painter is
 
    Active_Color : A0B.Types.Unsigned_16 := 0;
+   Active_Font  : SCD40_Sandbox.Fonts.Font_Descriptor_Access;
 
    package Display is
 
@@ -43,134 +44,6 @@ package body SCD40_Sandbox.Painter is
          H : A0B.Types.Unsigned_16);
 
    end Display;
-
-   package Font is
-
-      type Unsigned_8_Array is
-        array (A0B.Types.Unsigned_32 range <>) of A0B.Types.Unsigned_8;
-
-      Percent_Sign : constant Unsigned_8_Array :=
-        [16#7#, 16#e0#, 16#0#, 16#7f#, 16#e0#, 16#3#, 16#81#, 16#c0#,
-         16#1c#, 16#3#, 16#80#, 16#60#, 16#6#, 16#1#, 16#80#, 16#18#,
-         16#7#, 16#0#, 16#e0#, 16#ce#, 16#7#, 16#7#, 16#1f#, 16#f8#,
-         16#70#, 16#1f#, 16#83#, 16#80#, 16#0#, 16#38#, 16#0#, 16#1#,
-         16#c0#, 16#0#, 16#1c#, 16#0#, 16#1#, 16#e0#, 16#0#, 16#e#,
-         16#0#, 16#0#, 16#f0#, 16#0#, 16#7#, 16#0#, 16#0#, 16#78#,
-         16#0#, 16#3#, 16#80#, 16#f8#, 16#38#, 16#f#, 16#f8#, 16#c0#,
-         16#70#, 16#70#, 16#3#, 16#80#, 16#e0#, 16#c#, 16#1#, 16#80#,
-         16#30#, 16#6#, 16#0#, 16#e0#, 16#38#, 16#1#, 16#c1#, 16#c0#,
-         16#3#, 16#fe#, 16#0#, 16#7#, 16#e0#];
-
-      Digit_Zero : constant Unsigned_8_Array :=
-      --  [16#1f#, 16#06#, 16#31#, 16#01#, 16#20#, 16#28#, 16#07#, 16#00#,
-      --   16#60#, 16#0c#, 16#01#, 16#80#, 16#30#, 16#06#, 16#00#, 16#c0#,
-      --   16#18#, 16#03#, 16#00#, 16#d0#, 16#12#, 16#06#, 16#31#, 16#83#,
-      --   16#e0#];
-        [16#07#, 16#e0#, 16#0f#, 16#f8#, 16#1c#, 16#3c#, 16#30#, 16#1c#,
-         16#30#, 16#0e#, 16#60#, 16#06#, 16#60#, 16#6#, 16#60#, 16#7#,
-         16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#7#,
-         16#e0#, 16#06#, 16#60#, 16#06#, 16#60#, 16#6#, 16#70#, 16#c#,
-         16#30#, 16#1c#, 16#3c#, 16#38#, 16#1f#, 16#f0#, 16#7#, 16#e0#];
-      Digit_One  : constant Unsigned_8_Array :=
-        [16#1#, 16#80#, 16#1#, 16#c0#, 16#3#, 16#e0#, 16#3#, 16#30#,
-         16#3#, 16#18#, 16#3#, 16#c#, 16#3#, 16#6#, 16#0#, 16#3#,
-         16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#, 16#0#,
-         16#30#, 16#0#, 16#18#, 16#0#, 16#c#, 16#0#, 16#6#, 16#0#,
-         16#3#, 16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#,
-         16#0#, 16#30#, 16#0#, 16#18#, 16#0#, 16#c#, 16#0#, 16#6#,
-         16#0#, 16#3#, 16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#3f#,
-         16#ff#, 16#ff#, 16#ff#, 16#f0#];
-      Digit_Two  : constant Unsigned_8_Array :=
-        [16#3#, 16#f0#, 16#7#, 16#fe#, 16#7#, 16#3#, 16#86#, 16#0#,
-         16#e6#, 16#0#, 16#3b#, 16#0#, 16#f#, 16#0#, 16#7#, 16#80#,
-         16#3#, 16#c0#, 16#1#, 16#e0#, 16#1#, 16#80#, 16#0#, 16#c0#,
-         16#0#, 16#c0#, 16#0#, 16#e0#, 16#0#, 16#e0#, 16#1#, 16#c0#,
-         16#1#, 16#c0#, 16#3#, 16#80#, 16#3#, 16#80#, 16#3#, 16#0#,
-         16#3#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#, 16#1#, 16#80#,
-         16#6#, 16#c0#, 16#3#, 16#60#, 16#1#, 16#b0#, 16#0#, 16#df#,
-         16#ff#, 16#ef#, 16#ff#, 16#f0#];
-      Digit_Three : constant Unsigned_8_Array :=
-        [16#3#, 16#f8#, 16#3#, 16#ff#, 16#81#, 16#c0#, 16#f0#, 16#e0#,
-         16#e#, 16#60#, 16#1#, 16#b8#, 16#0#, 16#30#, 16#0#, 16#c#,
-         16#0#, 16#3#, 16#0#, 16#0#, 16#c0#, 16#0#, 16#70#, 16#0#,
-         16#18#, 16#0#, 16#e#, 16#0#, 16#fe#, 16#0#, 16#3f#, 16#80#,
-         16#0#, 16#70#, 16#0#, 16#e#, 16#0#, 16#1#, 16#80#, 16#0#,
-         16#30#, 16#0#, 16#c#, 16#0#, 16#3#, 16#0#, 16#0#, 16#c0#,
-         16#0#, 16#34#, 16#0#, 16#1d#, 16#80#, 16#6#, 16#30#, 16#3#,
-         16#7#, 16#3#, 16#c0#, 16#ff#, 16#c0#, 16#f#, 16#c0#];
-      Digit_Four : constant Unsigned_8_Array :=
-        [16#0#, 16#3#, 16#0#, 16#0#, 16#70#, 16#0#, 16#f#, 16#0#,
-         16#0#, 16#f0#, 16#0#, 16#1b#, 16#0#, 16#3#, 16#30#, 16#0#,
-         16#73#, 16#0#, 16#6#, 16#30#, 16#0#, 16#c3#, 16#0#, 16#18#,
-         16#30#, 16#3#, 16#3#, 16#0#, 16#70#, 16#30#, 16#6#, 16#3#,
-         16#0#, 16#c0#, 16#30#, 16#18#, 16#3#, 16#3#, 16#80#, 16#30#,
-         16#70#, 16#3#, 16#6#, 16#0#, 16#30#, 16#ff#, 16#ff#, 16#ff#,
-         16#ff#, 16#ff#, 16#0#, 16#3#, 16#0#, 16#0#, 16#30#, 16#0#,
-         16#3#, 16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#, 16#0#,
-         16#30#, 16#0#, 16#3f#, 16#f0#, 16#3#, 16#ff#];
-      Digit_Five : constant Unsigned_8_Array :=
-        [16#f#, 16#ff#, 16#f0#, 16#ff#, 16#ff#, 16#c#, 16#0#, 16#0#,
-         16#c0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c0#, 16#0#, 16#c#,
-         16#0#, 16#0#, 16#c0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c0#,
-         16#0#, 16#c#, 16#0#, 16#0#, 16#ff#, 16#e0#, 16#f#, 16#ff#,
-         16#80#, 16#0#, 16#3c#, 16#0#, 16#0#, 16#e0#, 16#0#, 16#6#,
-         16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#, 16#0#, 16#30#,
-         16#0#, 16#3#, 16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#,
-         16#0#, 16#6c#, 16#0#, 16#e#, 16#e0#, 16#1#, 16#c3#, 16#c0#,
-         16#78#, 16#1f#, 16#ff#, 16#0#, 16#3f#, 16#80#];
-      Digit_Six : constant Unsigned_8_Array :=
-        [16#3#, 16#ff#, 16#f#, 16#ff#, 16#1e#, 16#0#, 16#38#, 16#0#,
-         16#70#, 16#0#, 16#60#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#,
-         16#c0#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#, 16#c3#, 16#e0#,
-         16#cf#, 16#f8#, 16#fc#, 16#3c#, 16#f0#, 16#e#, 16#e0#, 16#6#,
-         16#e0#, 16#7#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#3#, 16#c0#, 16#3#, 16#60#, 16#7#, 16#60#, 16#6#,
-         16#70#, 16#e#, 16#38#, 16#1c#, 16#1f#, 16#f8#, 16#7#, 16#e0#];
-      Digit_Seven : constant Unsigned_8_Array :=
-        [16#ff#, 16#ff#, 16#ff#, 16#ff#, 16#f0#, 16#0#, 16#78#, 16#0#,
-         16#6c#, 16#0#, 16#36#, 16#0#, 16#1b#, 16#0#, 16#8#, 16#0#,
-         16#c#, 16#0#, 16#6#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#,
-         16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#, 16#60#,
-         16#0#, 16#30#, 16#0#, 16#10#, 16#0#, 16#18#, 16#0#, 16#c#,
-         16#0#, 16#6#, 16#0#, 16#6#, 16#0#, 16#3#, 16#0#, 16#1#,
-         16#80#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#, 16#0#,
-         16#20#, 16#0#, 16#30#, 16#0#];
-      Digit_Eight : constant Unsigned_8_Array :=
-        [16#7#, 16#e0#, 16#1f#, 16#f8#, 16#78#, 16#1e#, 16#60#, 16#6#,
-         16#e0#, 16#7#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#7#, 16#60#, 16#6#, 16#78#, 16#e#, 16#1f#, 16#f8#,
-         16#1f#, 16#f8#, 16#38#, 16#1c#, 16#60#, 16#e#, 16#60#, 16#6#,
-         16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#60#, 16#6#,
-         16#60#, 16#e#, 16#38#, 16#1c#, 16#1f#, 16#f8#, 16#7#, 16#e0#];
-      Digit_Nine : constant Unsigned_8_Array :=
-        [16#7#, 16#e0#, 16#1f#, 16#f8#, 16#38#, 16#1c#, 16#70#, 16#e#,
-         16#60#, 16#6#, 16#e0#, 16#6#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-         16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#e0#, 16#7#,
-         16#60#, 16#7#, 16#70#, 16#f#, 16#3c#, 16#3b#, 16#1f#, 16#f3#,
-         16#7#, 16#e3#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#, 16#3#,
-         16#0#, 16#3#, 16#0#, 16#7#, 16#0#, 16#6#, 16#0#, 16#e#,
-         16#0#, 16#1c#, 16#0#, 16#78#, 16#ff#, 16#f0#, 16#ff#, 16#c0#];
-
-      Degree_Celsius : constant Unsigned_8_Array :=
-        [16#3e#, 16#0#, 16#0#, 16#63#, 16#0#, 16#0#, 16#c1#, 16#80#,
-         16#0#, 16#c1#, 16#80#, 16#0#, 16#c1#, 16#80#, 16#0#, 16#e3#,
-         16#80#, 16#0#, 16#7f#, 16#0#, 16#0#, 16#3e#, 16#0#, 16#0#,
-         16#0#, 16#0#, 16#0#, 16#0#, 16#1f#, 16#e3#, 16#0#, 16#7f#,
-         16#fa#, 16#0#, 16#e0#, 16#1e#, 16#1#, 16#80#, 16#6#, 16#3#,
-         16#0#, 16#3#, 16#7#, 16#0#, 16#3#, 16#6#, 16#0#, 16#0#,
-         16#c#, 16#0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c#, 16#0#,
-         16#0#, 16#8#, 16#0#, 16#0#, 16#18#, 16#0#, 16#0#, 16#18#,
-         16#0#, 16#0#, 16#18#, 16#0#, 16#0#, 16#18#, 16#0#, 16#0#,
-         16#18#, 16#0#, 16#0#, 16#8#, 16#0#, 16#0#, 16#c#, 16#0#,
-         16#0#, 16#c#, 16#0#, 16#0#, 16#e#, 16#0#, 16#0#, 16#6#,
-         16#0#, 16#0#, 16#3#, 16#0#, 16#0#, 16#3#, 16#80#, 16#6#,
-         16#1#, 16#c0#, 16#e#, 16#0#, 16#f0#, 16#3c#, 16#0#, 16#7f#,
-         16#f0#, 16#0#, 16#f#, 16#c0#];
-
-   end Font;
 
    -------------
    -- Display --
@@ -280,34 +153,44 @@ package body SCD40_Sandbox.Painter is
       Text : String)
    is
       use type A0B.Types.Unsigned_16;
+      use type A0B.Types.Unsigned_32;
 
       procedure Write_Glyph
         (X    : in out A0B.Types.Unsigned_16;
          Y    : A0B.Types.Unsigned_16;
-         Bits : Font.Unsigned_8_Array;
+         Bits : SCD40_Sandbox.Fonts.Unsigned_8_Array;
          W    : A0B.Types.Unsigned_16;
          H    : A0B.Types.Unsigned_16;
-         DX   : A0B.Types.Unsigned_16;
-         DY   : A0B.Types.Unsigned_16)
+         DX   : A0B.Types.Integer_16;
+         DY   : A0B.Types.Integer_16;
+         GW   : A0B.Types.Unsigned_16 := 28)
       is
          use type A0B.Types.Unsigned_8;
+         use type A0B.Types.Integer_32;
 
          Aux : A0B.Types.Unsigned_8;
 
-         XS  : constant A0B.Types.Unsigned_16 := X + DX;
-         YS  : constant A0B.Types.Unsigned_16 := Y + DY - H;
+         XS  : constant A0B.Types.Unsigned_16 :=
+           A0B.Types.Unsigned_16
+             (A0B.Types.Integer_32 (X) + A0B.Types.Integer_32 (DX));
+         YS  : constant A0B.Types.Unsigned_16 :=
+           A0B.Types.Unsigned_16
+             (A0B.Types.Integer_32 (Y)
+                - A0B.Types.Integer_32 (DY)
+                - A0B.Types.Integer_32 (H));
          XE  : constant A0B.Types.Unsigned_16 := XS + W - 1;
          YE  : constant A0B.Types.Unsigned_16 := YS + H - 1;
          XC  : A0B.Types.Unsigned_16 := XS;
          YC  : A0B.Types.Unsigned_16 := YS;
 
       begin
+         Outer :
          for Byte of Bits loop
             Aux := Byte;
 
             for J in 0 .. 7 loop
                if (Aux and 2#1000_0000#) /= 0 then
-                  Display.Set_Write_Rectangle (XC, YC, 2, 2);
+                  Display.Set_Write_Rectangle (XC, YC, 1, 1);
                   Display.Command (Display.RAMWR);
                   Display.Write (Active_Color);
                end if;
@@ -320,37 +203,47 @@ package body SCD40_Sandbox.Painter is
                   XC := XS;
                   YC := @ + 1;
 
-                  exit when YC > YE;
+                  exit Outer when YC > YE;
                end if;
             end loop;
-         end loop;
+         end loop Outer;
 
-         --  X := @ + DX + W + 2;
-         X := @ + 28;
+         X := @ + GW;
       end Write_Glyph;
+
+      use type SCD40_Sandbox.Fonts.Glyph_Descriptor_Access;
 
       XC : A0B.Types.Unsigned_16          := A0B.Types.Unsigned_16 (X);
       YC : constant A0B.Types.Unsigned_16 := A0B.Types.Unsigned_16 (Y);
 
+      Glyph : SCD40_Sandbox.Fonts.Glyph_Descriptor_Access;
+      Code  : A0B.Types.Unsigned_32;
+
    begin
       for Character of Text loop
-         case Character is
-            when ' ' => XC := @ + 28;
-            when '%' => Write_Glyph (XC, YC, Font.Percent_Sign, 22, 28, 3, 0);
-            when '0' => Write_Glyph (XC, YC, Font.Digit_Zero, 16, 28, 6, 0);
-            when '1' => Write_Glyph (XC, YC, Font.Digit_One, 17, 28, 6, 0);
-            when '2' => Write_Glyph (XC, YC, Font.Digit_Two, 17, 28, 6, 0);
-            when '3' => Write_Glyph (XC, YC, Font.Digit_Three, 18, 28, 5, 0);
-            when '4' => Write_Glyph (XC, YC, Font.Digit_Four, 20, 28, 4, 0);
-            when '5' => Write_Glyph (XC, YC, Font.Digit_Five, 20, 28, 4, 0);
-            when '6' => Write_Glyph (XC, YC, Font.Digit_Six, 16, 28, 6, 0);
-            when '7' => Write_Glyph (XC, YC, Font.Digit_Seven, 17, 28, 6, 0);
-            when '8' => Write_Glyph (XC, YC, Font.Digit_Eight, 16, 28, 6, 0);
-            when '9' => Write_Glyph (XC, YC, Font.Digit_Nine, 16, 28, 4, 0);
-            when 'C' =>
-               Write_Glyph (XC, YC, Font.Degree_Celsius, 24, 36, 1, 0);
-            when others => null;
-         end case;
+         Code := Standard.Character'Pos (Character);
+
+         for J of Active_Font.Map.all loop
+            if Code in
+              J.First .. J.First + A0B.Types.Unsigned_32 (J.Length) - 1
+            then
+               Glyph :=
+                 Active_Font.Glyph
+                   (J.First_Glyph_Index
+                      + A0B.Types.Unsigned_16 (Code - J.First) - 1)'Access;
+            end if;
+         end loop;
+
+         Write_Glyph
+           (XC,
+            YC,
+            Active_Font.Bitmap
+              (Glyph.Bitmap_Index .. Active_Font.Bitmap'Last),
+            A0B.Types.Unsigned_16 (Glyph.Box_Width),
+            A0B.Types.Unsigned_16 (Glyph.Box_Height),
+            A0B.Types.Integer_16 (Glyph.Offset_X),
+            A0B.Types.Integer_16 (Glyph.Offset_Y),
+            Glyph.Glyph_Width / 16);
       end loop;
    end Draw_Text;
 
@@ -388,5 +281,14 @@ package body SCD40_Sandbox.Painter is
    begin
       Active_Color := Color;
    end Set_Color;
+
+   --------------
+   -- Set_Font --
+   --------------
+
+   procedure Set_Font (Font : SCD40_Sandbox.Fonts.Font_Descriptor_Access) is
+   begin
+      Active_Font := Font;
+   end Set_Font;
 
 end SCD40_Sandbox.Painter;

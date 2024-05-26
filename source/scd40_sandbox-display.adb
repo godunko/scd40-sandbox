@@ -16,6 +16,7 @@ with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time.Clock;
 
+with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 with SCD40_Sandbox.Globals;
 with SCD40_Sandbox.Painter;
 with SCD40_Sandbox.Widgets;
@@ -469,9 +470,13 @@ package body SCD40_Sandbox.Display is
       PW.Draw (A0B.Types.Integer_32 (Globals.Pressure));
       CW.Draw (A0B.Types.Integer_32 (Globals.CO2));
 
+      Painter.Set_Color (Background_Color);
+      Painter.Fill_Rect (0, 440, 800, 40);
+
+      Painter.Set_Font
+        (SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font'Access);
       Painter.Set_Color (L_RGB);
       Painter.Draw_Text (20, 475, L);
-
       Painter.Set_Color (T_RGB);
       Painter.Draw_Text (250, 475, BT & "C");
       Painter.Set_Color (H_RGB);

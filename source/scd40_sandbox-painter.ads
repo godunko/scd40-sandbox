@@ -6,6 +6,8 @@
 
 with A0B.Types;
 
+with SCD40_Sandbox.Fonts;
+
 package SCD40_Sandbox.Painter
   with Preelaborate
 is
@@ -17,6 +19,8 @@ is
    subtype RGB565_Color is A0B.Types.Unsigned_16;
 
    procedure Set_Color (Color : RGB565_Color);
+
+   procedure Set_Font (Font : SCD40_Sandbox.Fonts.Font_Descriptor_Access);
 
    procedure Draw_Rect
      (X : A0B.Types.Integer_32;
