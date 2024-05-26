@@ -291,38 +291,38 @@ package body SCD40_Sandbox.Painter is
          DY   : A0B.Types.Unsigned_16)
       is
          use type A0B.Types.Unsigned_8;
-         use type A0B.Types.Unsigned_32;
 
-         Remain : A0B.Types.Unsigned_32 :=
-           A0B.Types.Unsigned_32 (W) * A0B.Types.Unsigned_32 (H);
-         Aux    : A0B.Types.Unsigned_8;
+         Aux : A0B.Types.Unsigned_8;
+
+         XS  : constant A0B.Types.Unsigned_16 := X + DX;
+         YS  : constant A0B.Types.Unsigned_16 := Y + DY - H;
+         XE  : constant A0B.Types.Unsigned_16 := XS + W - 1;
+         YE  : constant A0B.Types.Unsigned_16 := YS + H - 1;
+         XC  : A0B.Types.Unsigned_16 := XS;
+         YC  : A0B.Types.Unsigned_16 := YS;
 
       begin
-         Display.Set_Write_Rectangle
-           (X + DX,
-            Y - H + DY,
-            --  Y - Line_Height + H + DY,
-            W,
-            H);
-
-         Display.Command (Display.RAMWR);
-
          for Byte of Bits loop
             Aux := Byte;
 
             for J in 0 .. 7 loop
-               exit when Remain = 0;
-               Remain := @ - 1;
-
-               Display.Write
-                 (if (Aux and 2#1000_0000#) /= 0
-                  then Active_Color
-                  else 16#2965#);
+               if (Aux and 2#1000_0000#) /= 0 then
+                  Display.Set_Write_Rectangle (XC, YC, 2, 2);
+                  Display.Command (Display.RAMWR);
+                  Display.Write (Active_Color);
+               end if;
 
                Aux := A0B.Types.Shift_Left (@, 1);
+
+               XC := @ + 1;
+
+               if XC > XE then
+                  XC := XS;
+                  YC := @ + 1;
+
+                  exit when YC > YE;
+               end if;
             end loop;
-            --  for Bit of Glyph loop
-            --     Write (if Bit = 1 then 16#FFFF# else 16#0000#);
          end loop;
 
          --  X := @ + DX + W + 2;
