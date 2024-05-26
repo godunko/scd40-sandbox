@@ -351,12 +351,13 @@ begin
          end;
 
          Globals.Light := BH1750.Get_Light_Value;
-         --  Set_Ambient_Pressure
-         --    (A0B.Types.Unsigned_32'Min
-         --       (110_000,
-         --        A0B.Types.Unsigned_32'Max
-         --          (70_100, A0B.Types.Unsigned_32 (Globals.Pressure))));
-         --  A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
+
+         Set_Ambient_Pressure
+           (A0B.Types.Unsigned_32'Min
+              (110_000,
+               A0B.Types.Unsigned_32'Max
+                 (70_100, A0B.Types.Unsigned_32 (Globals.Pressure))));
+         A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
          Read_Measurement;
 
