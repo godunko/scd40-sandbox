@@ -361,10 +361,7 @@ begin
 
          Read_Measurement;
 
-         SCD40_Sandbox.Display.Redraw
-           (CO2_Concentration => Globals.CO2,
-            Temperature       => Globals.T,
-            Humidity          => Globals.RH);
+         SCD40_Sandbox.Display.Redraw;
       end if;
    end loop;
 

@@ -17,6 +17,8 @@ with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time.Clock;
 
 with SCD40_Sandbox.Globals;
+with SCD40_Sandbox.Painter;
+with SCD40_Sandbox.Widgets;
 
 package body SCD40_Sandbox.Display is
 
@@ -38,23 +40,10 @@ package body SCD40_Sandbox.Display is
 
    SLPOUT : constant := 16#1100#;
    DISPON : constant := 16#2900#;
-   CASET  : constant := 16#2A00#;
-   CASET0 : constant := CASET + 0;
-   CASET1 : constant := CASET + 1;
-   CASET2 : constant := CASET + 2;
-   CASET3 : constant := CASET + 3;
-   RASET  : constant := 16#2B00#;
-   RASET0 : constant := RASET + 0;
-   RASET1 : constant := RASET + 1;
-   RASET2 : constant := RASET + 2;
-   RASET3 : constant := RASET + 3;
-   RAMWR  : constant := 16#2C00#;
    MADCTL : constant := 16#3600#;
    COLMOD : constant := 16#3A00#;
 
    procedure Command (Command : NT35510_Command);
-
-   procedure Write (Data : A0B.Types.Unsigned_16);
 
    procedure Command_Write
      (Command : NT35510_Command;
@@ -72,285 +61,24 @@ package body SCD40_Sandbox.Display is
    procedure Clear;
    --  Clear content of the screen.
 
-   --  type Unsigned_1_Array is
-   --    array (A0B.Types.Unsigned_32 range <>) of A0B.Types.Unsigned_1;
+   --  C_RGB : constant := 16#FFC0#;
+   --  T_RGB : constant := 16#07E0#;
+   --  H_RGB : constant := 16#F800#;
+   --  P_RGB : constant := 16#001F#;
+   --  L_RGB : constant := 16#D69A#;
+   H_RGB : constant := 16#4288#;
+   T_RGB : constant := 16#4228#;
+   P_RGB : constant := 16#4228#;
+   L_RGB : constant := 16#4228#;
 
-   C_RGB : constant := 16#FFC0#;
-   T_RGB : constant := 16#07E0#;
-   H_RGB : constant := 16#F800#;
-   P_RGB : constant := 16#001F#;
-   L_RGB : constant := 16#D69A#;
+   Background_Color : constant := 16#18E3#;
+
+   TW : SCD40_Sandbox.Widgets.Widget;
+   HW : SCD40_Sandbox.Widgets.Widget;
+   CW : SCD40_Sandbox.Widgets.Widget;
+   PW : SCD40_Sandbox.Widgets.Widget;
 
    Clear_Duration : A0B.Time.Duration with Volatile;
-
-   type Point is record
-      C : A0B.Types.Unsigned_16;
-      T : A0B.Types.Unsigned_16;
-      H : A0B.Types.Unsigned_16;
-      P : A0B.Types.Unsigned_16;
-      L : A0B.Types.Unsigned_16;
-   end record;
-
-   Points : array (A0B.Types.Unsigned_16 range 0 .. 799) of Point :=
-     [others => (others => 0)];
-
-   type Unsigned_8_Array is
-     array (A0B.Types.Unsigned_32 range <>) of A0B.Types.Unsigned_8;
-
-   Percent_Sign : constant Unsigned_8_Array :=
-     [16#7#, 16#e0#, 16#0#, 16#7f#, 16#e0#, 16#3#, 16#81#, 16#c0#,
-      16#1c#, 16#3#, 16#80#, 16#60#, 16#6#, 16#1#, 16#80#, 16#18#,
-      16#7#, 16#0#, 16#e0#, 16#ce#, 16#7#, 16#7#, 16#1f#, 16#f8#,
-      16#70#, 16#1f#, 16#83#, 16#80#, 16#0#, 16#38#, 16#0#, 16#1#,
-      16#c0#, 16#0#, 16#1c#, 16#0#, 16#1#, 16#e0#, 16#0#, 16#e#,
-      16#0#, 16#0#, 16#f0#, 16#0#, 16#7#, 16#0#, 16#0#, 16#78#,
-      16#0#, 16#3#, 16#80#, 16#f8#, 16#38#, 16#f#, 16#f8#, 16#c0#,
-      16#70#, 16#70#, 16#3#, 16#80#, 16#e0#, 16#c#, 16#1#, 16#80#,
-      16#30#, 16#6#, 16#0#, 16#e0#, 16#38#, 16#1#, 16#c1#, 16#c0#,
-      16#3#, 16#fe#, 16#0#, 16#7#, 16#e0#];
-
-   Digit_Zero : constant Unsigned_8_Array :=
-     --  [16#1f#, 16#06#, 16#31#, 16#01#, 16#20#, 16#28#, 16#07#, 16#00#,
-     --   16#60#, 16#0c#, 16#01#, 16#80#, 16#30#, 16#06#, 16#00#, 16#c0#,
-     --   16#18#, 16#03#, 16#00#, 16#d0#, 16#12#, 16#06#, 16#31#, 16#83#,
-     --   16#e0#];
-     [16#07#, 16#e0#, 16#0f#, 16#f8#, 16#1c#, 16#3c#, 16#30#, 16#1c#,
-      16#30#, 16#0e#, 16#60#, 16#06#, 16#60#, 16#6#, 16#60#, 16#7#,
-      16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#03#, 16#c0#, 16#03#, 16#c0#, 16#3#, 16#c0#, 16#7#,
-      16#e0#, 16#06#, 16#60#, 16#06#, 16#60#, 16#6#, 16#70#, 16#c#,
-      16#30#, 16#1c#, 16#3c#, 16#38#, 16#1f#, 16#f0#, 16#7#, 16#e0#];
-   Digit_One  : constant Unsigned_8_Array :=
-     [16#1#, 16#80#, 16#1#, 16#c0#, 16#3#, 16#e0#, 16#3#, 16#30#,
-      16#3#, 16#18#, 16#3#, 16#c#, 16#3#, 16#6#, 16#0#, 16#3#,
-      16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#, 16#0#,
-      16#30#, 16#0#, 16#18#, 16#0#, 16#c#, 16#0#, 16#6#, 16#0#,
-      16#3#, 16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#,
-      16#0#, 16#30#, 16#0#, 16#18#, 16#0#, 16#c#, 16#0#, 16#6#,
-      16#0#, 16#3#, 16#0#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#3f#,
-      16#ff#, 16#ff#, 16#ff#, 16#f0#];
-   Digit_Two  : constant Unsigned_8_Array :=
-     [16#3#, 16#f0#, 16#7#, 16#fe#, 16#7#, 16#3#, 16#86#, 16#0#,
-      16#e6#, 16#0#, 16#3b#, 16#0#, 16#f#, 16#0#, 16#7#, 16#80#,
-      16#3#, 16#c0#, 16#1#, 16#e0#, 16#1#, 16#80#, 16#0#, 16#c0#,
-      16#0#, 16#c0#, 16#0#, 16#e0#, 16#0#, 16#e0#, 16#1#, 16#c0#,
-      16#1#, 16#c0#, 16#3#, 16#80#, 16#3#, 16#80#, 16#3#, 16#0#,
-      16#3#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#, 16#1#, 16#80#,
-      16#6#, 16#c0#, 16#3#, 16#60#, 16#1#, 16#b0#, 16#0#, 16#df#,
-      16#ff#, 16#ef#, 16#ff#, 16#f0#];
-   Digit_Three : constant Unsigned_8_Array :=
-     [16#3#, 16#f8#, 16#3#, 16#ff#, 16#81#, 16#c0#, 16#f0#, 16#e0#,
-      16#e#, 16#60#, 16#1#, 16#b8#, 16#0#, 16#30#, 16#0#, 16#c#,
-      16#0#, 16#3#, 16#0#, 16#0#, 16#c0#, 16#0#, 16#70#, 16#0#,
-      16#18#, 16#0#, 16#e#, 16#0#, 16#fe#, 16#0#, 16#3f#, 16#80#,
-      16#0#, 16#70#, 16#0#, 16#e#, 16#0#, 16#1#, 16#80#, 16#0#,
-      16#30#, 16#0#, 16#c#, 16#0#, 16#3#, 16#0#, 16#0#, 16#c0#,
-      16#0#, 16#34#, 16#0#, 16#1d#, 16#80#, 16#6#, 16#30#, 16#3#,
-      16#7#, 16#3#, 16#c0#, 16#ff#, 16#c0#, 16#f#, 16#c0#];
-   Digit_Four : constant Unsigned_8_Array :=
-     [16#0#, 16#3#, 16#0#, 16#0#, 16#70#, 16#0#, 16#f#, 16#0#,
-      16#0#, 16#f0#, 16#0#, 16#1b#, 16#0#, 16#3#, 16#30#, 16#0#,
-      16#73#, 16#0#, 16#6#, 16#30#, 16#0#, 16#c3#, 16#0#, 16#18#,
-      16#30#, 16#3#, 16#3#, 16#0#, 16#70#, 16#30#, 16#6#, 16#3#,
-      16#0#, 16#c0#, 16#30#, 16#18#, 16#3#, 16#3#, 16#80#, 16#30#,
-      16#70#, 16#3#, 16#6#, 16#0#, 16#30#, 16#ff#, 16#ff#, 16#ff#,
-      16#ff#, 16#ff#, 16#0#, 16#3#, 16#0#, 16#0#, 16#30#, 16#0#,
-      16#3#, 16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#, 16#0#,
-      16#30#, 16#0#, 16#3f#, 16#f0#, 16#3#, 16#ff#];
-   Digit_Five : constant Unsigned_8_Array :=
-     [16#f#, 16#ff#, 16#f0#, 16#ff#, 16#ff#, 16#c#, 16#0#, 16#0#,
-      16#c0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c0#, 16#0#, 16#c#,
-      16#0#, 16#0#, 16#c0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c0#,
-      16#0#, 16#c#, 16#0#, 16#0#, 16#ff#, 16#e0#, 16#f#, 16#ff#,
-      16#80#, 16#0#, 16#3c#, 16#0#, 16#0#, 16#e0#, 16#0#, 16#6#,
-      16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#, 16#0#, 16#30#,
-      16#0#, 16#3#, 16#0#, 16#0#, 16#30#, 16#0#, 16#3#, 16#0#,
-      16#0#, 16#6c#, 16#0#, 16#e#, 16#e0#, 16#1#, 16#c3#, 16#c0#,
-      16#78#, 16#1f#, 16#ff#, 16#0#, 16#3f#, 16#80#];
-   Digit_Six : constant Unsigned_8_Array :=
-     [16#3#, 16#ff#, 16#f#, 16#ff#, 16#1e#, 16#0#, 16#38#, 16#0#,
-      16#70#, 16#0#, 16#60#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#,
-      16#c0#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#, 16#c3#, 16#e0#,
-      16#cf#, 16#f8#, 16#fc#, 16#3c#, 16#f0#, 16#e#, 16#e0#, 16#6#,
-      16#e0#, 16#7#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#3#, 16#c0#, 16#3#, 16#60#, 16#7#, 16#60#, 16#6#,
-      16#70#, 16#e#, 16#38#, 16#1c#, 16#1f#, 16#f8#, 16#7#, 16#e0#];
-   Digit_Seven : constant Unsigned_8_Array :=
-     [16#ff#, 16#ff#, 16#ff#, 16#ff#, 16#f0#, 16#0#, 16#78#, 16#0#,
-      16#6c#, 16#0#, 16#36#, 16#0#, 16#1b#, 16#0#, 16#8#, 16#0#,
-      16#c#, 16#0#, 16#6#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#,
-      16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#c0#, 16#0#, 16#60#,
-      16#0#, 16#30#, 16#0#, 16#10#, 16#0#, 16#18#, 16#0#, 16#c#,
-      16#0#, 16#6#, 16#0#, 16#6#, 16#0#, 16#3#, 16#0#, 16#1#,
-      16#80#, 16#1#, 16#80#, 16#0#, 16#c0#, 16#0#, 16#60#, 16#0#,
-      16#20#, 16#0#, 16#30#, 16#0#];
-   Digit_Eight : constant Unsigned_8_Array :=
-     [16#7#, 16#e0#, 16#1f#, 16#f8#, 16#78#, 16#1e#, 16#60#, 16#6#,
-      16#e0#, 16#7#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#7#, 16#60#, 16#6#, 16#78#, 16#e#, 16#1f#, 16#f8#,
-      16#1f#, 16#f8#, 16#38#, 16#1c#, 16#60#, 16#e#, 16#60#, 16#6#,
-      16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#60#, 16#6#,
-      16#60#, 16#e#, 16#38#, 16#1c#, 16#1f#, 16#f8#, 16#7#, 16#e0#];
-   Digit_Nine : constant Unsigned_8_Array :=
-     [16#7#, 16#e0#, 16#1f#, 16#f8#, 16#38#, 16#1c#, 16#70#, 16#e#,
-      16#60#, 16#6#, 16#e0#, 16#6#, 16#c0#, 16#3#, 16#c0#, 16#3#,
-      16#c0#, 16#3#, 16#c0#, 16#3#, 16#c0#, 16#3#, 16#e0#, 16#7#,
-      16#60#, 16#7#, 16#70#, 16#f#, 16#3c#, 16#3b#, 16#1f#, 16#f3#,
-      16#7#, 16#e3#, 16#0#, 16#3#, 16#0#, 16#3#, 16#0#, 16#3#,
-      16#0#, 16#3#, 16#0#, 16#7#, 16#0#, 16#6#, 16#0#, 16#e#,
-      16#0#, 16#1c#, 16#0#, 16#78#, 16#ff#, 16#f0#, 16#ff#, 16#c0#];
-
-   Degree_Celsius : constant Unsigned_8_Array :=
-     [16#3e#, 16#0#, 16#0#, 16#63#, 16#0#, 16#0#, 16#c1#, 16#80#,
-      16#0#, 16#c1#, 16#80#, 16#0#, 16#c1#, 16#80#, 16#0#, 16#e3#,
-      16#80#, 16#0#, 16#7f#, 16#0#, 16#0#, 16#3e#, 16#0#, 16#0#,
-      16#0#, 16#0#, 16#0#, 16#0#, 16#1f#, 16#e3#, 16#0#, 16#7f#,
-      16#fa#, 16#0#, 16#e0#, 16#1e#, 16#1#, 16#80#, 16#6#, 16#3#,
-      16#0#, 16#3#, 16#7#, 16#0#, 16#3#, 16#6#, 16#0#, 16#0#,
-      16#c#, 16#0#, 16#0#, 16#c#, 16#0#, 16#0#, 16#c#, 16#0#,
-      16#0#, 16#8#, 16#0#, 16#0#, 16#18#, 16#0#, 16#0#, 16#18#,
-      16#0#, 16#0#, 16#18#, 16#0#, 16#0#, 16#18#, 16#0#, 16#0#,
-      16#18#, 16#0#, 16#0#, 16#8#, 16#0#, 16#0#, 16#c#, 16#0#,
-      16#0#, 16#c#, 16#0#, 16#0#, 16#e#, 16#0#, 16#0#, 16#6#,
-      16#0#, 16#0#, 16#3#, 16#0#, 16#0#, 16#3#, 16#80#, 16#6#,
-      16#1#, 16#c0#, 16#e#, 16#0#, 16#f0#, 16#3c#, 16#0#, 16#7f#,
-      16#f0#, 16#0#, 16#f#, 16#c0#];
-
-   --  Digit_Zero : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 1, 1, 0, 0, 0,
-   --       0, 1, 1, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_One  : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Two  : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 0, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 0, 0, 0, 0,
-   --       0, 1, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Three : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Four : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 1, 0, 0, 0, 0,
-   --       0, 1, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Five : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 1, 1, 1, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 0, 0, 0, 0,
-   --       0, 0, 1, 0, 0, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Six : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 0, 0, 0, 0,
-   --       0, 1, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Seven : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 1, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 0, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Eight : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-   --  Digit_Nine : constant Unsigned_1_Array (0 .. 63) :=
-   --      [0, 0, 1, 1, 0, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 1, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 1, 1, 1, 0, 0, 0,
-   --       0, 0, 0, 0, 1, 0, 0, 0,
-   --       0, 0, 0, 1, 0, 0, 0, 0,
-   --       0, 0, 1, 0, 0, 0, 0, 0,
-   --       0, 0, 0, 0, 0, 0, 0, 0];
-
-   procedure Set_Draw_Rectangle
-     (X : A0B.Types.Unsigned_16;
-      Y : A0B.Types.Unsigned_16;
-      W : A0B.Types.Unsigned_16;
-      H : A0B.Types.Unsigned_16);
-
-   ------------------------
-   -- Set_Draw_Rectangle --
-   ------------------------
-
-   procedure Set_Draw_Rectangle
-     (X : A0B.Types.Unsigned_16;
-      Y : A0B.Types.Unsigned_16;
-      W : A0B.Types.Unsigned_16;
-      H : A0B.Types.Unsigned_16)
-   is
-      use type A0B.Types.Unsigned_16;
-
-      XSH : constant A0B.Types.Unsigned_16 := A0B.Types.Shift_Right (X, 8);
-      XSL : constant A0B.Types.Unsigned_16 := X and 16#00FF#;
-      YSH : constant A0B.Types.Unsigned_16 := A0B.Types.Shift_Right (Y, 8);
-      YSL : constant A0B.Types.Unsigned_16 := Y and 16#00FF#;
-      XE  : constant A0B.Types.Unsigned_16 := X + W - 1;
-      YE  : constant A0B.Types.Unsigned_16 := Y + H - 1;
-      XEH : constant A0B.Types.Unsigned_16 := A0B.Types.Shift_Right (XE, 8);
-      XEL : constant A0B.Types.Unsigned_16 := XE and 16#00FF#;
-      YEH : constant A0B.Types.Unsigned_16 := A0B.Types.Shift_Right (YE, 8);
-      YEL : constant A0B.Types.Unsigned_16 := YE and 16#00FF#;
-
-   begin
-      Command_Write (CASET0, XSH);
-      Command_Write (CASET1, XSL);
-      Command_Write (CASET2, XEH);
-      Command_Write (CASET3, XEL);
-      --  Set horizontal drawing range
-
-      Command_Write (RASET0, YSH);
-      Command_Write (RASET1, YSL);
-      Command_Write (RASET2, YEH);
-      Command_Write (RASET3, YEL);
-      --  Set vertical drawing range
-   end Set_Draw_Rectangle;
 
    -----------
    -- Clear --
@@ -362,24 +90,8 @@ package body SCD40_Sandbox.Display is
       Start : constant A0B.Time.Monotonic_Time := A0B.Time.Clock;
 
    begin
-      Set_Draw_Rectangle (0, 0, 800, 480);
-      --  Command_Write (CASET0, 16#00#);
-      --  Command_Write (CASET1, 16#00#);
-      --  Command_Write (CASET2, 16#03#);
-      --  Command_Write (CASET3, 16#1F#);
-      --  --  Set horizontal drawing range 0 .. 799
-      --
-      --  Command_Write (RASET0, 16#00#);
-      --  Command_Write (RASET1, 16#00#);
-      --  Command_Write (RASET2, 16#01#);
-      --  Command_Write (RASET3, 16#8F#);
-      --  --  Set vertical drawing range 0 .. 399
-
-      Command (RAMWR);
-
-      for J in 1 .. 800 * 480 loop
-         Write (16#0000#);
-      end loop;
+      Painter.Set_Color (Background_Color);
+      Painter.Fill_Rect (0, 0, 800, 480);
 
       Clear_Duration := A0B.Time.To_Duration (A0B.Time.Clock - Start);
    end Clear;
@@ -696,6 +408,8 @@ package body SCD40_Sandbox.Display is
    ----------------
 
    procedure Initialize is
+      use type A0B.Types.Integer_32;
+
    begin
       Configure_PLL2;
       Configure_FMC;
@@ -723,175 +437,22 @@ package body SCD40_Sandbox.Display is
       --  Cleaup display memory
 
       Command (DISPON);
+
+      --  Initialize widgets.
+
+      TW.Initialize (10, 50, 380, 180, -20, 60, 'C');
+      HW.Initialize (410, 50, 380, 180, 0, 100, '%');
+      PW.Initialize (10, 250, 380, 180, 60_000, 120_000, ' ');
+      CW.Initialize (410, 250, 380, 180, 300, 2_100, ' ');
    end Initialize;
 
    ------------
    -- Redraw --
    ------------
 
-   procedure Redraw
-     (CO2_Concentration : A0B.Types.Unsigned_16;
-      Temperature       : A0B.Types.Unsigned_16;
-      Humidity          : A0B.Types.Unsigned_16)
-   is
-      use type A0B.Types.Integer_32;
-      use type A0B.Types.Unsigned_16;
+   procedure Redraw is
       use type Interfaces.IEEE_Float_64;
 
-      ----------
-      -- Draw --
-      ----------
-
-      procedure Draw
-        (X     : A0B.Types.Unsigned_16;
-         Y     : A0B.Types.Unsigned_16;
-         Color : A0B.Types.Unsigned_16;
-         Text  : String)
-      is
-
-         --  Line_Height : constant := 37;
-         --  Baseline    : constant := 1;
-
-         -----------------
-         -- Write_Glyph --
-         -----------------
-
-         --  procedure Write_Glyph
-         --    (X     : in out A0B.Types.Unsigned_16;
-         --     Y     : A0B.Types.Unsigned_16;
-         --     Glyph : Unsigned_1_Array)
-         --  is
-         --     use type A0B.Types.Unsigned_1;
-         --
-         --  begin
-         --     Set_Draw_Rectangle (X, Y, 8, 8);
-         --
-         --     Command (RAMWR);
-         --
-         --     for Bit of Glyph loop
-         --        Write (if Bit = 1 then 16#FFFF# else 16#0000#);
-         --     end loop;
-         --
-         --     X := @ + 8;
-         --  end Write_Glyph;
-
-         procedure Write_Glyph
-           (X    : in out A0B.Types.Unsigned_16;
-            Y    : A0B.Types.Unsigned_16;
-            Bits : Unsigned_8_Array;
-            W    : A0B.Types.Unsigned_16;
-            H    : A0B.Types.Unsigned_16;
-            DX   : A0B.Types.Unsigned_16;
-            DY   : A0B.Types.Unsigned_16)
-         is
-            use type A0B.Types.Unsigned_8;
-            use type A0B.Types.Unsigned_32;
-
-            Remain : A0B.Types.Unsigned_32 :=
-              A0B.Types.Unsigned_32 (W) * A0B.Types.Unsigned_32 (H);
-            Aux    : A0B.Types.Unsigned_8;
-
-         begin
-            Set_Draw_Rectangle
-              (X + DX,
-               Y - H + DY,
-               --  Y - Line_Height + H + DY,
-               W,
-               H);
-
-            Command (RAMWR);
-
-            for Byte of Bits loop
-               Aux := Byte;
-
-               for J in 0 .. 7 loop
-                  exit when Remain = 0;
-                  Remain := @ - 1;
-
-                  Write
-                    (if (Aux and 2#1000_0000#) /= 0
-                       then Color
-                       else 16#0000#);
-
-                  Aux := A0B.Types.Shift_Left (@, 1);
-               end loop;
-            --  for Bit of Glyph loop
-            --     Write (if Bit = 1 then 16#FFFF# else 16#0000#);
-            end loop;
-
-            X := @ + DX + W + 2;
-            --  X := @ + 28;
-         end Write_Glyph;
-
-         XC : A0B.Types.Unsigned_16          := X;
-         YC : constant A0B.Types.Unsigned_16 := Y;
-
-      begin
-         for Character of Text loop
-            case Character is
-            when ' ' => null;
-            when '%' => Write_Glyph (XC, YC, Percent_Sign, 22, 28, 3, 0);
-            when '0' => Write_Glyph (XC, YC, Digit_Zero, 16, 28, 6, 0);
-            when '1' => Write_Glyph (XC, YC, Digit_One, 17, 28, 6, 0);
-            when '2' => Write_Glyph (XC, YC, Digit_Two, 17, 28, 6, 0);
-            when '3' => Write_Glyph (XC, YC, Digit_Three, 18, 28, 5, 0);
-            when '4' => Write_Glyph (XC, YC, Digit_Four, 20, 28, 4, 0);
-            when '5' => Write_Glyph (XC, YC, Digit_Five, 20, 28, 4, 0);
-            when '6' => Write_Glyph (XC, YC, Digit_Six, 16, 28, 6, 0);
-            when '7' => Write_Glyph (XC, YC, Digit_Seven, 17, 28, 6, 0);
-            when '8' => Write_Glyph (XC, YC, Digit_Eight, 16, 28, 6, 0);
-            when '9' => Write_Glyph (XC, YC, Digit_Nine, 16, 28, 4, 0);
-            when 'C' => Write_Glyph (XC, YC, Degree_Celsius, 24, 36, 1, 0);
-            when others => null;
-            end case;
-         end loop;
-      end Draw;
-
-      ---------
-      -- Map --
-      ---------
-
-      function Map
-        (L : A0B.Types.Integer_32;
-         H : A0B.Types.Integer_32;
-         V : A0B.Types.Unsigned_16) return A0B.Types.Unsigned_16
-      is
-         --  L32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (L);
-         --  H32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (H);
-         V32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (V);
-
-      begin
-         return
-           A0B.Types.Unsigned_16
-             (479 - ((479 - 0) * (V32 - L) / (H - L)));
-      end Map;
-
-      function Map
-        (L : A0B.Types.Integer_32;
-         H : A0B.Types.Integer_32;
-         V : A0B.Types.Integer_32) return A0B.Types.Unsigned_16
-      is
-         --  L32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (L);
-         --  H32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (H);
-         --  V32 : constant A0B.Types.Integer_32 := A0B.Types.Integer_32 (V);
-
-      begin
-         return
-           A0B.Types.Unsigned_16
-             (479 - ((479 - 0) * (V - L) / (H - L)));
-      end Map;
-
-      --  Text : constant String := "0123456789";
-
-      --  X    : constant A0B.Types.Unsigned_16 := 0;
-      --  Y    : constant A0B.Types.Unsigned_16 := 0;
-
-      C : constant String := A0B.Types.Unsigned_16'Image (CO2_Concentration);
-      T : constant String := A0B.Types.Unsigned_16'Image (Temperature);
-      H : constant String := A0B.Types.Unsigned_16'Image (Humidity);
-
-      BPP : constant String :=
-        A0B.Types.Unsigned_32'Image (A0B.Types.Unsigned_32 (Globals.Pressure));
       BPM : constant String :=
         A0B.Types.Unsigned_32'Image
           (A0B.Types.Unsigned_32 (Globals.Pressure * 0.00750062));
@@ -900,59 +461,23 @@ package body SCD40_Sandbox.Display is
           (A0B.Types.Unsigned_32 (Globals.Temperature));
       BH : constant String :=
         A0B.Types.Unsigned_32'Image (A0B.Types.Unsigned_32 (Globals.Humidity));
-
-      CG : constant A0B.Types.Unsigned_16 := Map (0, 2_000, CO2_Concentration);
-      TG : constant A0B.Types.Unsigned_16 := Map (-20, 80, Temperature);
-      HG : constant A0B.Types.Unsigned_16 := Map (0, 100, Humidity);
-      PG : constant A0B.Types.Unsigned_16 :=
-        Map (30_000, 110_000, A0B.Types.Integer_32 (Globals.Pressure));
-      LG : constant A0B.Types.Unsigned_16 :=
-        Map (0, 65_535, Globals.Light);
-
-      L : constant String := A0B.Types.Unsigned_16'Image (Globals.Light);
+      L  : constant String := A0B.Types.Unsigned_16'Image (Globals.Light);
 
    begin
-      Points (0 .. 798) := Points (1 .. 799);
-      Points (799) := (CG, TG, HG, PG, LG);
+      TW.Draw (A0B.Types.Integer_32 (Globals.T));
+      HW.Draw (A0B.Types.Integer_32 (Globals.RH));
+      PW.Draw (A0B.Types.Integer_32 (Globals.Pressure));
+      CW.Draw (A0B.Types.Integer_32 (Globals.CO2));
 
-      Clear;
+      Painter.Set_Color (L_RGB);
+      Painter.Draw_Text (20, 475, L);
 
-      for J in Points'Range loop
-         Set_Draw_Rectangle (J, Points (J).C, 1, 1);
-         Command_Write (RAMWR, C_RGB);
-
-         Set_Draw_Rectangle (J, Points (J).H, 1, 1);
-         Command_Write (RAMWR, H_RGB);
-
-         Set_Draw_Rectangle (J, Points (J).T, 1, 1);
-         Command_Write (RAMWR, T_RGB);
-
-         Set_Draw_Rectangle (J, Points (J).P, 1, 1);
-         Command_Write (RAMWR, P_RGB);
-
-         Set_Draw_Rectangle (J, Points (J).L, 1, 1);
-         Command_Write (RAMWR, L_RGB);
-      end loop;
-
-      --  Draw (X, Y, Text);
-      Draw (100, 100, C_RGB, C);
-      Draw (100, 200, T_RGB, T & "C");
-      Draw (100, 300, H_RGB, H & "%");
-      Draw (100, 400, L_RGB, L);
-
-      Draw (600, 200, T_RGB, BT & "C");
-      Draw (600, 300, H_RGB, BH & "%");
-      Draw (600, 400, P_RGB, BPP);
-      Draw (700, 450, P_RGB, BPM);
+      Painter.Set_Color (T_RGB);
+      Painter.Draw_Text (250, 475, BT & "C");
+      Painter.Set_Color (H_RGB);
+      Painter.Draw_Text (450, 475, BH & "%");
+      Painter.Set_Color (P_RGB);
+      Painter.Draw_Text (650, 475, BPM);
    end Redraw;
-
-   -----------
-   -- Write --
-   -----------
-
-   procedure Write (Data : A0B.Types.Unsigned_16) is
-   begin
-      Data_Register := Data;
-   end Write;
 
 end SCD40_Sandbox.Display;
