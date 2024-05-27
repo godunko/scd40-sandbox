@@ -1,27 +1,34 @@
 # STM32H723 & display panel
 
-| STM32H723 | NT35510 |
-|-----------|---------|
-| PC7 FMC_NE1 | CS |
-| PF4 FMC_A4  | RS |
-| PD5 FMC_NWE | WR |
-| PD4 FMC_NOE | RD |
-| PD14 FMC_D0 | DB0 |
-| PD15 FMC_D1 | DB1 |
-| PD0 FMC_D2 | DB2 |
-| PD1 FMC_D3 | DB3 |
-| PE7 FMC_D4 | DB4 |
-| PE8 FMC_D5 | DB5 |
-| PE9 FMC_D6 | DB6 |
-| PE10 FMC_D7 | DB7 |
-| PE11 FMC_D8 | DB8 |
-| PE12 FMC_D9 | DB9 |
-| PE13 FMC_D10 | DB10 |
-| PE14 FMC_D11 | DB11 |
-| PC0 FMC_D12 | DB12 |
-| PD8 FMC_D13 | DB13 |
-| PD9 FMC_D14 | DB14 |
-| PD10 FMC_D15 | DB15 |
+| STM32H723 Line | Board Pin | Display Pin | NT35510 Line | XPT2026 Line |
+|----------------|-----------|-------------|--------------|--------------|
+| FMC_NE1 | C7  | CS   | CSX  |
+| FMC_A4  | F4  | RS   | D/CX |
+| FMC_NWE | D5  | WR   | WRX  |
+| FMC_NOE | D4  | RD   | RDX  |
+|         |     | RST  | RESX |
+| FMC_D0  | D14 | DB0  | D0   |
+| FMC_D1  | D15 | DB1  | D1   |
+| FMC_D2  | D0  | DB2  | D2   |
+| FMC_D3  | D1  | DB3  | D3   |
+| FMC_D4  | E7  | DB4  | D4   |
+| FMC_D5  | E8  | DB5  | D5   |
+| FMC_D6  | E9  | DB6  | D6   |
+| FMC_D7  | E10 | DB7  | D7   |
+| FMC_D8  | E11 | DB8  | D8   |
+| FMC_D9  | E12 | DB9  | D9   |
+| FMC_D10 | E13 | DB10 | D10  |
+| FMC_D11 | E14 | DB11 | D11  |
+| FMC_D12 | C0  | DB12 | D12  |
+| FMC_D13 | D8  | DB13 | D13  |
+| FMC_D14 | D9  | DB14 | D14  |
+| FMC_D15 | D10 | DB15 | D15  |
+|         |     | BL   |
+|         |     | MISO |      | DIN    |
+|         |     | MOSI |      | DOUT   |
+|         |     | PEN  |      | PENIRQ |
+|         |     | CLK  |      | DCLK   |
+|         |     | T_CS |      | CS     |
 
 # STM32H723 & I2C sensors
 
