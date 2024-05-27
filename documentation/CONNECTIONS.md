@@ -1,7 +1,7 @@
 # STM32H723 & display panel
 
-| STM32H723 Line | Board Pin | Display Pin | Direction | NT35510 Line | XPT2026 Line |
-| -------------- | --------- | ----------- | :-------: | ------------ | ------------ |
+| STM32H723 Line | Board Pin | Direction | Display Pin | NT35510 Line | XPT2026 Line |
+|      ---       |    ---    |   :---:   |     ---     |      ---     |      ---     |
 | FMC_NE1 | C7  | --> | CS   | CSX  |
 | FMC_A4  | F4  | --> | RS   | D/CX |
 | FMC_NWE | D5  | --> | WR   | WRX  |
