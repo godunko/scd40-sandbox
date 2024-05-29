@@ -4,6 +4,8 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+with A0B.Types;
+
 package SCD40_Sandbox.Fonts
   with Preelaborate
 is

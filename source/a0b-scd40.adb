@@ -15,7 +15,7 @@ package body A0B.SCD40 is
    CRC8_INIT       : constant := 16#FF#;
 
    function Sensirion_CRC
-     (Data : A0B.STM32H723.I2C.Unsigned_8_Array) return A0B.Types.Unsigned_8;
+     (Data : A0B.I2C.Unsigned_8_Array) return A0B.Types.Unsigned_8;
 
    -----------------------------------------
    -- Build_Get_Data_Ready_Status_Command --
@@ -254,7 +254,7 @@ package body A0B.SCD40 is
    -------------------
 
    function Sensirion_CRC
-     (Data : A0B.STM32H723.I2C.Unsigned_8_Array) return A0B.Types.Unsigned_8
+     (Data : A0B.I2C.Unsigned_8_Array) return A0B.Types.Unsigned_8
    is
       CRC : A0B.Types.Unsigned_8 := CRC8_INIT;
 

@@ -7,7 +7,8 @@
 with Ada.Unchecked_Conversion;
 
 with A0B.Delays;
-with A0B.STM32H723.I2C.I2C4;
+with A0B.I2C.SCD40;
+with A0B.I2C.STM32H723_I2C.I2C4;
 with A0B.Time;
 with A0B.Types.GCC_Builtins;
 
@@ -18,8 +19,8 @@ package body SCD40_Sandbox.BME280
 is
 
    BME_Sensor_Slave :
-     A0B.STM32H723.I2C.I2C_Slave_Device
-       (A0B.STM32H723.I2C.I2C4.I2C4'Access, BME280_I2C_Address);
+     A0B.I2C.SCD40.SCD40_Driver
+       (A0B.I2C.STM32H723_I2C.I2C4.I2C4'Access, BME280_I2C_Address);
 
    CALIB00_Address   : constant := 16#88#;
    CHIP_ID_Address   : constant := 16#D0#;
@@ -118,19 +119,16 @@ is
 
    procedure Get_Calibration_Data;
 
-   subtype CALIB00_CALIB25_Response is
-     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 25);
+   subtype CALIB00_CALIB25_Response is A0B.I2C.Unsigned_8_Array (0 .. 25);
 
-   subtype CALIB26_CALIB41_Response is
-     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 15);
+   subtype CALIB26_CALIB41_Response is A0B.I2C.Unsigned_8_Array (0 .. 15);
 
    procedure Parse_Calibration_Data
      (T    : CALIB00_CALIB25_Response;
       H    : CALIB26_CALIB41_Response;
       Data : out Calibration_Data);
 
-   subtype Measure_Data_Response is
-     A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 7);
+   subtype Measure_Data_Response is A0B.I2C.Unsigned_8_Array (0 .. 7);
 
    procedure Parse_Measure_Data
      (Response : Measure_Data_Response;
@@ -175,8 +173,9 @@ is
 
       --  Ctrl_Hum        : Ctrl_Hum_Register :=
       --    (osrs_h => To_Oversamplig (Humidity_Oversampling), others => <>);
-      Command  : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
+      Command  : A0B.I2C.Unsigned_8_Array (0 .. 1);
       Success  : Boolean := True;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
@@ -194,9 +193,9 @@ is
 
       BME_Sensor_Slave.Write
         (Command,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       --  Pressure/temperature, mode should be set to sleep till configuration
@@ -216,9 +215,9 @@ is
 
       BME_Sensor_Slave.Write
         (Command,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       --  Inactive duration in normal mode, IIR filter.
@@ -240,9 +239,9 @@ is
 
       BME_Sensor_Slave.Write
         (Command,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       --  Mode
@@ -261,9 +260,9 @@ is
 
       BME_Sensor_Slave.Write
         (Command,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
    end Configure;
 
@@ -272,10 +271,11 @@ is
    --------------------------
 
    procedure Get_Calibration_Data is
-      Command     : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
+      Command     : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response_00 : CALIB00_CALIB25_Response;
       Response_26 : CALIB26_CALIB41_Response;
       Success     : Boolean := True;
+      Status      : aliased A0B.I2C.SCD40.Transaction_Status;
       Await       : aliased SCD40_Sandbox.Await.Await;
 
    begin
@@ -283,20 +283,22 @@ is
 
       BME_Sensor_Slave.Write_Read
         (Command,
+         A0B.Time.Milliseconds (1),
          Response_00,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       Command (0) := CALIB26_Address;
 
       BME_Sensor_Slave.Write_Read
         (Command,
+         A0B.Time.Milliseconds (1),
          Response_26,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       Parse_Calibration_Data (Response_00, Response_26, Calib);
@@ -307,9 +309,10 @@ is
    -----------------
 
    function Get_Chip_Id return A0B.Types.Unsigned_8 is
-      Command  : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
-      Response : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
+      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Success  : Boolean := True;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
@@ -317,10 +320,11 @@ is
 
       BME_Sensor_Slave.Write_Read
         (Command,
+         A0B.Time.Milliseconds (1),
          Response,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       return Response (0);
@@ -452,10 +456,11 @@ is
    ---------------------
 
    function Get_Sensor_Data return Sensor_Data is
-      Command  : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
+      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response : Measure_Data_Response;
       Success  : Boolean := True;
       Await    : aliased SCD40_Sandbox.Await.Await;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
       Result   : Sensor_Data;
 
    begin
@@ -488,10 +493,11 @@ is
 
       BME_Sensor_Slave.Write_Read
         (Command,
+         A0B.Time.Milliseconds (1),
          Response,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       Parse_Measure_Data (Response, Result);
@@ -504,10 +510,11 @@ is
    ----------------
 
    function Get_Status return Status_Register is
-      Command  : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
-      Response : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 0);
+      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Result   : Status_Register with Import, Address => Response (0)'Address;
       Success  : Boolean := True;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
@@ -515,10 +522,11 @@ is
 
       BME_Sensor_Slave.Write_Read
         (Command,
+         A0B.Time.Milliseconds (1),
          Response,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       return Result;
@@ -656,9 +664,10 @@ is
    ----------------
 
    procedure Soft_Reset is
-      Command : A0B.STM32H723.I2C.Unsigned_8_Array (0 .. 1);
-      Success  : Boolean := True;
-      Await    : aliased SCD40_Sandbox.Await.Await;
+      Command : A0B.I2C.Unsigned_8_Array (0 .. 1);
+      Success : Boolean := True;
+      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await   : aliased SCD40_Sandbox.Await.Await;
 
    begin
       Command (0) := RESET_Address;
@@ -666,9 +675,9 @@ is
 
       BME_Sensor_Slave.Write
         (Command,
+         Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
    end Soft_Reset;
 

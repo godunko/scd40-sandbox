@@ -15,6 +15,7 @@ with A0B.SVD.STM32H723.FMC;  use A0B.SVD.STM32H723.FMC;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time.Clock;
+with A0B.Types;
 
 with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 with SCD40_Sandbox.Globals;

@@ -4,22 +4,14 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-private with A0B.Callbacks.Generic_Parameterless;
-with A0B.Types;
+with A0B.I2C;
 
 package SCD40_Sandbox
   with Preelaborate
 is
 
-   SCD40_I2C_Address  : constant A0B.Types.Unsigned_7 := 16#62#;
-   BME280_I2C_Address : constant A0B.Types.Unsigned_7 := 16#76#;
-   BH1750_I2C_Address : constant A0B.Types.Unsigned_7 := 16#23#;
-
-private
-
-   procedure On_Done is null;
-
-   package Callbacks is
-     new A0B.Callbacks.Generic_Parameterless (On_Done);
+   SCD40_I2C_Address  : constant A0B.I2C.Device_Address := 16#62#;
+   BME280_I2C_Address : constant A0B.I2C.Device_Address := 16#76#;
+   BH1750_I2C_Address : constant A0B.I2C.Device_Address := 16#23#;
 
 end SCD40_Sandbox;
