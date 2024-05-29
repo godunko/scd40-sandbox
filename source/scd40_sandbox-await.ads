@@ -24,7 +24,7 @@ is
 private
 
    type Await is limited record
-      Busy : Boolean := False;
+      Busy : Boolean := False with Volatile;
    end record;
 
 end SCD40_Sandbox.Await;
