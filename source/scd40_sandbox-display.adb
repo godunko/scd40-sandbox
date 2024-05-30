@@ -20,6 +20,7 @@ with A0B.Types;
 with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 with SCD40_Sandbox.Globals;
 with SCD40_Sandbox.Painter;
+with SCD40_Sandbox.Touch;
 with SCD40_Sandbox.Widgets;
 
 package body SCD40_Sandbox.Display is
@@ -496,5 +497,36 @@ package body SCD40_Sandbox.Display is
       Painter.Set_Color (P_RGB);
       Painter.Draw_Text (600, 470, BPM & " " & mmHg);
    end Redraw;
+
+   ------------------
+   -- Redraw_Touch --
+   ------------------
+
+   procedure Redraw_Touch is
+   begin
+      Painter.Set_Color (Background_Color);
+      Painter.Fill_Rect (0, 0, 800, 50);
+
+      Painter.Set_Font
+        (SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font'Access);
+      Painter.Set_Color (P_RGB);
+
+      declare
+         X  : constant Wide_String :=
+           A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.X);
+         Y  : constant Wide_String :=
+           A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.Y);
+         Z1 : constant Wide_String :=
+           A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.Z1);
+         Z2 : constant Wide_String :=
+           A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.Z2);
+
+      begin
+         Painter.Draw_Text (50, 43, X);
+         Painter.Draw_Text (250, 43, Y);
+         Painter.Draw_Text (550, 43, Z1);
+         Painter.Draw_Text (650, 43, Z2);
+      end;
+   end Redraw_Touch;
 
 end SCD40_Sandbox.Display;

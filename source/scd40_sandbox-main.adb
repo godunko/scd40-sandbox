@@ -22,6 +22,7 @@ with SCD40_Sandbox.BH1750;
 with SCD40_Sandbox.BME280;
 with SCD40_Sandbox.Display;
 with SCD40_Sandbox.Globals;
+with SCD40_Sandbox.Touch;
 
 procedure SCD40_Sandbox.Main is
 
@@ -161,9 +162,9 @@ procedure SCD40_Sandbox.Main is
          Globals.RH,
          Success);
 
-      if not Success then
-         raise Program_Error;
-      end if;
+      --  if not Success then
+      --     raise Program_Error;
+      --  end if;
    end Read_Measurement;
 
    --------------------------
@@ -313,6 +314,7 @@ begin
    SCD40_Sandbox.Display.Initialize;
    SCD40_Sandbox.BME280.Initialize;
    SCD40_Sandbox.BH1750.Initialize;
+   SCD40_Sandbox.Touch.Initialize;
 
    SCD40_Sandbox.BME280.Configure
      (Mode                     => BME280.Normal,
@@ -358,10 +360,13 @@ begin
    Start_Periodic_Measurement;
 
    loop
-      A0B.Delays.Delay_For (A0B.Time.Seconds (1));
+      A0B.Delays.Delay_For (A0B.Time.Milliseconds (250));
       --  for J in 1 .. 500_000_000 loop
       --     Idle := @ + 1;
       --  end loop;
+
+      SCD40_Sandbox.Touch.Get_Touch;
+      SCD40_Sandbox.Display.Redraw_Touch;
 
       --  SCD40_Sandbox.Display.Redraw;
 

@@ -12,4 +12,6 @@ is
 
    procedure Redraw;
 
+   procedure Redraw_Touch;
+
 end SCD40_Sandbox.Display;
