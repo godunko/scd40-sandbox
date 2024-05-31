@@ -15,7 +15,7 @@
 | FMC_D5    | E8  | <-> | DB5  | D5   |
 | FMC_D6    | E9  | <-> | DB6  | D6   |
 | FMC_D7    | E10 | <-> | DB7  | D7   |
-| FMC_D8    | E11 | <-> | DB8  | D8   |
+| FMC_D8    | A4  | <-> | DB8  | D8   |
 | FMC_D9    | E12 | <-> | DB9  | D9   |
 | FMC_D10   | E13 | <-> | DB10 | D10  |
 | FMC_D11   | E14 | <-> | DB11 | D11  |
@@ -23,7 +23,7 @@
 | FMC_D13   | D8  | <-> | DB13 | D13  |
 | FMC_D14   | D9  | <-> | DB14 | D14  |
 | FMC_D15   | D10 | <-> | DB15 | D15  |
-|           |     | --> | BL   |
+| LPTM5_OUT | A3  | --> | BL   |
 | SPI6_MISO | G12 | <-- | MISO |      | DOUT   |
 | SPI6_MOSI | A7  | --> | MOSI |      | DIN    |
 |           |     | <-- | PEN  |      | PENIRQ |
