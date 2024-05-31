@@ -8,11 +8,12 @@ with A0B.SVD.STM32H723.RCC; use A0B.SVD.STM32H723.RCC;
 
 package body SCD40_Sandbox.System_Clocks is
 
-   DIVM2   : constant := 10;
-   MULN2   : constant := 240 - 1;
+   DIVM2   : constant := 5;
+   MULN2   : constant := 120 - 1;
    DIVP2   : constant := 6 - 1;
    DIVR2   : constant := 5 - 1;
-   PLL2GRE : constant := 2#00#;
+   PLL2GRE : constant := 2#10#;
+   --  The PLL2 input (ref2_ck) clock range frequency is between 4 and 8 MHz
 
    procedure Configure_PLL2;
    --  Configure PLL2R @120MHz to be used as clock of the FMC.
@@ -65,9 +66,10 @@ package body SCD40_Sandbox.System_Clocks is
 
       begin
          Aux.PLL2FRACEN := False;
-         Aux.PLL2VCOSEL := True;
+         Aux.PLL2VCOSEL := False;
          Aux.PLL2RGE    := PLL2GRE;
          Aux.DIVP2EN    := True;
+         Aux.DIVQ2EN    := False;
          Aux.DIVR2EN    := True;
 
          RCC_Periph.PLLCFGR := Aux;
