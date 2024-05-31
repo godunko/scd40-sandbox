@@ -185,10 +185,6 @@ package body SCD40_Sandbox.Display is
       Configure_L (GPIOA_Periph, 4, 12);
       --  PA5  -> FMC_D9
       Configure_L (GPIOA_Periph, 5, 12);
-      --  PC0  -> FMC_D12
-      Configure_L (GPIOC_Periph, 0, 1);
-      --  PC7  -> FMC_NE1
-      Configure_L (GPIOC_Periph, 7, 9);
       --  PD0  -> FMC_D2
       Configure_L (GPIOD_Periph, 0, 12);
       --  PD1  -> FMC_D3
@@ -197,6 +193,8 @@ package body SCD40_Sandbox.Display is
       Configure_L (GPIOD_Periph, 4, 12);
       --  PD5  -> FMC_NWE
       Configure_L (GPIOD_Periph, 5, 12);
+      --  PD7  -> FMC_NE1
+      Configure_L (GPIOD_Periph, 7, 12);
       --  PD8  -> FMC_D13
       Configure_H (GPIOD_Periph, 8, 12);
       --  PD9  -> FMC_D14
@@ -219,6 +217,8 @@ package body SCD40_Sandbox.Display is
       Configure_H (GPIOE_Periph, 13, 12);
       --  PE14 -> FMC_D11
       Configure_H (GPIOE_Periph, 14, 12);
+      --  PE15 -> FMC_D12
+      Configure_H (GPIOE_Periph, 15, 12);
       --  PF4  -> FMC_A4
       Configure_L (GPIOF_Periph, 4, 12);
    end Configure_GPIO;

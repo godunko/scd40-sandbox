@@ -2,7 +2,7 @@
 
 | STM32H723 Line | Board Pin | Direction | Display Pin | NT35510 Line | XPT2026 Line |
 |      ---       |    ---    |   :---:   |     ---     |      ---     |      ---     |
-| FMC_NE1   | C7  | --> | CS   | CSX  |
+| FMC_NE1   | D7  | --> | CS   | CSX  |
 | FMC_A4    | F4  | --> | RS   | D/CX |
 | FMC_NWE   | D5  | --> | WR   | WRX  |
 | FMC_NOE   | D4  | --> | RD   | RDX  |
@@ -19,7 +19,7 @@
 | FMC_D9    | E12 | <-> | DB9  | D9   |
 | FMC_D10   | E13 | <-> | DB10 | D10  |
 | FMC_D11   | E14 | <-> | DB11 | D11  |
-| FMC_D12   | C0  | <-> | DB12 | D12  |
+| FMC_D12   | E15 | <-> | DB12 | D12  |
 | FMC_D13   | D8  | <-> | DB13 | D13  |
 | FMC_D14   | D9  | <-> | DB14 | D14  |
 | FMC_D15   | D10 | <-> | DB15 | D15  |
