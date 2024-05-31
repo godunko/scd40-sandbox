@@ -22,6 +22,7 @@ with SCD40_Sandbox.BH1750;
 with SCD40_Sandbox.BME280;
 with SCD40_Sandbox.Display;
 with SCD40_Sandbox.Globals;
+with SCD40_Sandbox.System_Clocks;
 with SCD40_Sandbox.Touch;
 
 procedure SCD40_Sandbox.Main is
@@ -257,6 +258,7 @@ procedure SCD40_Sandbox.Main is
 
 begin
    A0B.ARMv7M.SysTick.Initialize (True, 520_000_000);
+   SCD40_Sandbox.System_Clocks.Initialize;
 
    --  Select I2C4 clock source
 

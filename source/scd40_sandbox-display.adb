@@ -25,14 +25,6 @@ with SCD40_Sandbox.Widgets;
 
 package body SCD40_Sandbox.Display is
 
-   DIVM2   : constant := 25;
-   MULN2   : constant := 240 - 1;
-   DIVR2   : constant := 2 - 1;
-   PLL2GRE : constant := 2#00#;
-
-   procedure Configure_PLL2;
-   --  Configure PLL2R @120MHz to be used as clock for FMC.
-
    procedure Configure_FMC;
 
    procedure Configure_MPU;
@@ -348,73 +340,6 @@ package body SCD40_Sandbox.Display is
          others => <>);
    end Configure_MPU;
 
-   --------------------
-   -- Configure_PLL2 --
-   --------------------
-
-   procedure Configure_PLL2 is
-      --  This configuration should be synchronized somehow with startup code.
-      --  It assumes use of HSE @25MHz to drive PLLs.
-
-   begin
-      --  Disable the main PLL.
-
-      RCC_Periph.CR.PLL2ON := False;
-
-      --  Wait till PLL is disabled.
-
-      while RCC_Periph.CR.PLL2RDY loop
-         null;
-      end loop;
-
-      --  Configure PLL2.
-
-      declare
-         Aux : PLLCKSELR_Register := RCC_Periph.PLLCKSELR;
-
-      begin
-         Aux.DIVM2 := DIVM2;
-
-         RCC_Periph.PLLCKSELR := Aux;
-      end;
-
-      declare
-         Aux : PLL2DIVR_Register := RCC_Periph.PLL2DIVR;
-
-      begin
-         Aux.DIVN1  := MULN2;
-         Aux.DIVP1  := 0;
-         Aux.DIVQ1  := 0;
-         Aux.DIVR1  := DIVR2;
-
-         RCC_Periph.PLL2DIVR := Aux;
-      end;
-
-      declare
-         Aux : PLLCFGR_Register := RCC_Periph.PLLCFGR;
-
-      begin
-         Aux.PLL2FRACEN := False;
-         Aux.PLL2VCOSEL := True;
-         Aux.PLL2RGE    := PLL2GRE;
-         Aux.DIVR2EN    := True;
-
-         RCC_Periph.PLLCFGR := Aux;
-      end;
-
-      RCC_Periph.PLL2FRACR.FRACN2 := 0;
-
-      --  Enable the PLL.
-
-      RCC_Periph.CR.PLL2ON := True;
-
-      --  Wait till PLL is enabled.
-
-      while not RCC_Periph.CR.PLL2RDY loop
-         null;
-      end loop;
-   end Configure_PLL2;
-
    ----------------
    -- Initialize --
    ----------------
@@ -423,7 +348,6 @@ package body SCD40_Sandbox.Display is
       use type A0B.Types.Integer_32;
 
    begin
-      Configure_PLL2;
       Configure_FMC;
       Configure_GPIO;
       Configure_MPU;
