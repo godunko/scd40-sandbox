@@ -173,8 +173,6 @@ package body SCD40_Sandbox.Display is
       RCC_Periph.AHB4ENR.GPIOEEN := True;
       RCC_Periph.AHB4ENR.GPIOFEN := True;
 
-      --  PA4  -> FMC_D8
-      Configure_L (GPIOA_Periph, 4, 12);
       --  PD0  -> FMC_D2
       Configure_L (GPIOD_Periph, 0, 12);
       --  PD1  -> FMC_D3
@@ -203,6 +201,8 @@ package body SCD40_Sandbox.Display is
       Configure_H (GPIOE_Periph, 9, 12);
       --  PE10 -> FMC_D7
       Configure_H (GPIOE_Periph, 10, 12);
+      --  PE11 -> FMC_D8
+      Configure_H (GPIOE_Periph, 11, 12);
       --  PE12 -> FMC_D9
       Configure_H (GPIOE_Periph, 12, 12);
       --  PE13 -> FMC_D10
