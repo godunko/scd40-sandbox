@@ -38,23 +38,23 @@ private
 
       procedure Acquire
         (Self    : in out Lock;
-         Device  : not null I2C_Slave_Driver_Access;
+         Device  : not null I2C_Device_Driver_Access;
          Success : in out Boolean);
 
       procedure Release
         (Self    : in out Lock;
-         Device  : not null I2C_Slave_Driver_Access;
+         Device  : not null I2C_Device_Driver_Access;
          Success : in out Boolean);
 
-      function Device (Self : Lock) return I2C_Slave_Driver_Access;
+      function Device (Self : Lock) return I2C_Device_Driver_Access;
 
    private
 
       type Lock is limited record
-         Device : I2C_Slave_Driver_Access;
+         Device : I2C_Device_Driver_Access;
       end record;
 
-      function Device (Self : Lock) return I2C_Slave_Driver_Access is
+      function Device (Self : Lock) return I2C_Device_Driver_Access is
         (Self.Device);
 
    end Device_Locks;
@@ -75,12 +75,12 @@ private
 
    overriding procedure Start
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Success : in out Boolean);
 
    overriding procedure Write
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Buffer  : Unsigned_8_Array;
       Status  : aliased out Transfer_Status;
       Stop    : Boolean;
@@ -88,7 +88,7 @@ private
 
    overriding procedure Read
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Buffer  : out Unsigned_8_Array;
       Status  : aliased out Transfer_Status;
       Stop    : Boolean;
@@ -96,7 +96,7 @@ private
 
    overriding procedure Stop
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Success : in out Boolean);
 
    procedure On_Event_Interrupt (Self : in out Master_Controller'Class);

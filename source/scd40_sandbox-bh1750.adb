@@ -4,16 +4,15 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with A0B.I2C.SCD40;
+with A0B.I2C.Device_Drivers;
 with A0B.I2C.STM32H723_I2C.I2C4;
-with A0B.Time;
 
 with SCD40_Sandbox.Await;
 
 package body SCD40_Sandbox.BH1750 is
 
    BH_Sensor_Slave :
-     A0B.I2C.SCD40.SCD40_Driver
+     A0B.I2C.Device_Drivers.I2C_Device_Driver
        (A0B.I2C.STM32H723_I2C.I2C4.I2C4'Access,
         BH1750_I2C_Address);
 
@@ -28,13 +27,12 @@ package body SCD40_Sandbox.BH1750 is
       Command  : A0B.I2C.Unsigned_8_Array (1 .. 0);
       Response : A0B.I2C.Unsigned_8_Array (0 .. 1);
       Success  : Boolean := True;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
+      Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
       BH_Sensor_Slave.Write_Read
         (Command,
-         A0B.Time.Milliseconds (1),
          Response,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
@@ -53,7 +51,7 @@ package body SCD40_Sandbox.BH1750 is
    procedure Initialize is
       Command : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Success : Boolean := True;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Status  : aliased A0B.I2C.Device_Drivers.Transaction_Status;
       Await   : aliased SCD40_Sandbox.Await.Await;
 
    begin
@@ -66,7 +64,6 @@ package body SCD40_Sandbox.BH1750 is
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
       --  Start measument in high resolution mode
@@ -78,7 +75,6 @@ package body SCD40_Sandbox.BH1750 is
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
    end Initialize;
 

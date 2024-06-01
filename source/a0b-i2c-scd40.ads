@@ -11,6 +11,7 @@
 
 pragma Restrictions (No_Elaboration_Code);
 
+with A0B.Callbacks;
 with A0B.Time;
 private with A0B.Timer;
 
@@ -27,7 +28,7 @@ is
    type SCD40_Driver
      (Controller : not null access I2C_Bus_Master'Class;
       Address    : Device_Address) is
-     limited new Abstract_I2C_Slave_Driver with private
+     limited new Abstract_I2C_Device_Driver with private
        with Preelaborable_Initialization;
 
    procedure Write
@@ -61,7 +62,7 @@ private
    type SCD40_Driver
      (Controller : not null access I2C_Bus_Master'Class;
       Address    : Device_Address) is
-   limited new Abstract_I2C_Slave_Driver with record
+   limited new Abstract_I2C_Device_Driver with record
       Delay_Interval : A0B.Time.Time_Span;
       Transfers      : Transfer_Decsriptor_Array;
       Current        : Active_Transfer;

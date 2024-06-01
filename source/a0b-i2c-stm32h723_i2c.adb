@@ -173,7 +173,7 @@ is
 
       package Conversions is
         new System.Address_To_Access_Conversions
-              (Abstract_I2C_Slave_Driver'Class);
+              (Abstract_I2C_Device_Driver'Class);
 
       -------------
       -- Acquire --
@@ -181,7 +181,7 @@ is
 
       procedure Acquire
         (Self    : in out Lock;
-         Device  : not null I2C_Slave_Driver_Access;
+         Device  : not null I2C_Device_Driver_Access;
          Success : in out Boolean)
       is
          Aux : System.Storage_Elements.Integer_Address :=
@@ -221,7 +221,7 @@ is
 
       procedure Release
         (Self    : in out Lock;
-         Device  : not null I2C_Slave_Driver_Access;
+         Device  : not null I2C_Device_Driver_Access;
          Success : in out Boolean) is
       begin
          if not Success
@@ -350,7 +350,7 @@ is
          --  Clear STOPF interrupt status
 
          declare
-            Device  : constant I2C_Slave_Driver_Access :=
+            Device  : constant I2C_Device_Driver_Access :=
               Device_Locks.Device (Self.Device_Lock);
             Success : Boolean := True;
 
@@ -390,7 +390,7 @@ is
 
    overriding procedure Read
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Buffer  : out Unsigned_8_Array;
       Status  : aliased out Transfer_Status;
       Stop    : Boolean;
@@ -480,7 +480,7 @@ is
 
    overriding procedure Stop
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Success : in out Boolean) is
    begin
 
@@ -533,7 +533,7 @@ is
 
    overriding procedure Start
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Success : in out Boolean) is
    begin
       Device_Locks.Acquire (Self.Device_Lock, Device, Success);
@@ -551,7 +551,7 @@ is
 
    overriding procedure Write
      (Self    : in out Master_Controller;
-      Device  : not null I2C_Slave_Driver_Access;
+      Device  : not null I2C_Device_Driver_Access;
       Buffer  : Unsigned_8_Array;
       Status  : aliased out Transfer_Status;
       Stop    : Boolean;
