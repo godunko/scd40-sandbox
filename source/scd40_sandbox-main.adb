@@ -8,22 +8,22 @@ pragma Ada_2022;
 
 with A0B.ARMv7M.SysTick;
 with A0B.Delays;
-with A0B.I2C.SCD40;
 with A0B.I2C.STM32H723_I2C.I2C4;
-with A0B.SCD40;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.I2C;  use A0B.SVD.STM32H723.I2C;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.Time;
 with A0B.Types;
 
-with SCD40_Sandbox.Await;
 with SCD40_Sandbox.BH1750;
 with SCD40_Sandbox.BME280;
 with SCD40_Sandbox.Display;
 with SCD40_Sandbox.Globals;
+with SCD40_Sandbox.SCD40;
 with SCD40_Sandbox.System_Clocks;
 with SCD40_Sandbox.Touch;
+
+--  with LADO.Acquisition;
 
 procedure SCD40_Sandbox.Main is
 
@@ -42,223 +42,11 @@ procedure SCD40_Sandbox.Main is
    --  Ready    : Boolean := False with Volatile;
    --  Idle     : A0B.Types.Unsigned_64 := 0 with Volatile;
 
-   SCD40_Sensor_Slave : A0B.I2C.SCD40.SCD40_Driver
-                         (A0B.I2C.STM32H723_I2C.I2C4.I2C4'Access,
-                          SCD40_I2C_Address);
-
-   procedure Start_Periodic_Measurement;
-
-   procedure Read_Measurement;
-
-   procedure Get_Serial_Number;
-
-   procedure Get_Data_Ready_Status;
-
-   ---------------------------
-   -- Get_Data_Ready_Status --
-   ---------------------------
-
-   procedure Get_Data_Ready_Status is
-      Command  : A0B.SCD40.Get_Data_Ready_Status_Command;
-      Response : A0B.SCD40.Get_Data_Ready_Status_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased SCD40_Sandbox.Await.Await;
-      Success  : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Get_Data_Ready_Status_Command (Command);
-
-      SCD40_Sensor_Slave.Write_Read
-        (Command,
-         A0B.Time.Milliseconds (3),
-         Response,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      A0B.SCD40.Parse_Get_Data_Ready_Status_Response
-        (Response, Globals.Ready, Success);
-
-      --  if not Success then
-      --     raise Program_Error;
-      --  end if;
-   end Get_Data_Ready_Status;
-
-   -----------------------
-   -- Get_Serial_Number --
-   -----------------------
-
-   procedure Get_Serial_Number is
-      Command  : A0B.SCD40.Get_Serial_Number_Command;
-      Response : A0B.SCD40.Get_Serial_Number_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased SCD40_Sandbox.Await.Await;
-      Success  : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Serial_Number_Command (Command);
-
-      SCD40_Sensor_Slave.Write_Read
-        (Command,
-         A0B.Time.Milliseconds (1),
-         Response,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      A0B.SCD40.Parse_Get_Serial_Number_Response
-        (Response, SCD40_Sandbox.Globals.Serial, Success);
-   end Get_Serial_Number;
-
-   --------------------------
-   -- Perfom_Factory_Reset --
-   --------------------------
-
-   procedure Perfom_Factory_Reset is
-      Command : A0B.SCD40.Perfom_Factory_Reset_Command;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased SCD40_Sandbox.Await.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Perfom_Factory_Reset_Command (Command);
-
-      SCD40_Sensor_Slave.Write
-        (Command,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-   end Perfom_Factory_Reset;
-
-   ----------------------
-   -- Read_Measurement --
-   ----------------------
-
-   procedure Read_Measurement is
-      Command  : A0B.SCD40.Read_Measurement_Command;
-      Response : A0B.SCD40.Read_Measurement_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased SCD40_Sandbox.Await.Await;
-      Success  : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Read_Measurement_Command (Command);
-
-      SCD40_Sensor_Slave.Write_Read
-        (Command,
-         A0B.Time.Milliseconds (1),
-         Response,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      A0B.SCD40.Parse_Read_Measurement_Response
-        (Response,
-         Globals.CO2,
-         Globals.T,
-         Globals.RH,
-         Success);
-
-      --  if not Success then
-      --     raise Program_Error;
-      --  end if;
-   end Read_Measurement;
-
-   --------------------------
-   -- Set_Ambient_Pressure --
-   --------------------------
-
-   procedure Set_Ambient_Pressure (To : A0B.Types.Unsigned_32) is
-      Command : A0B.SCD40.Set_Ambient_Pressure_Command;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased SCD40_Sandbox.Await.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Set_Ambient_Pressure_Command (Command, To);
-
-      SCD40_Sensor_Slave.Write
-        (Command,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-   end Set_Ambient_Pressure;
-
-   -------------------------
-   -- Set_Sensor_Altitude --
-   -------------------------
-
-   procedure Set_Sensor_Altitude (To : A0B.Types.Unsigned_16) is
-      Command : A0B.SCD40.Set_Sensor_Altitude_Command;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased SCD40_Sandbox.Await.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Set_Sensor_Altitude_Command (Command, To);
-
-      SCD40_Sensor_Slave.Write
-        (Command,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-   end Set_Sensor_Altitude;
-
-   ----------------------------
-   -- Set_Temperature_Offset --
-   ----------------------------
-
-   procedure Set_Temperature_Offset (To : A0B.Types.Unsigned_16) is
-      Command : A0B.SCD40.Set_Temperature_Offset_Command;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased SCD40_Sandbox.Await.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Set_Temperature_Offset_Command (Command, To);
-
-      SCD40_Sensor_Slave.Write
-        (Command,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-   end Set_Temperature_Offset;
-
-   --------------------------------
-   -- Start_Periodic_Measurement --
-   --------------------------------
-
-   procedure Start_Periodic_Measurement is
-      Command : A0B.SCD40.Start_Periodic_Measument_Command;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased SCD40_Sandbox.Await.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Start_Periodic_Measument_Command (Command);
-
-      SCD40_Sensor_Slave.Write
-        (Command,
-         Status,
-         SCD40_Sandbox.Await.Create_Callback (Await),
-         Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-   end Start_Periodic_Measurement;
-
 begin
    A0B.ARMv7M.SysTick.Initialize (True, 520_000_000);
    SCD40_Sandbox.System_Clocks.Initialize;
+
+   --  LADO.Acquisition.Initialize;
 
    --  Select I2C4 clock source
 
@@ -314,8 +102,10 @@ begin
    ---------------------------------------------------------------------------
 
    SCD40_Sandbox.Display.Initialize;
+   --  LADO.Acquisition.Run;
    SCD40_Sandbox.BME280.Initialize;
    SCD40_Sandbox.BH1750.Initialize;
+   SCD40_Sandbox.SCD40.Initialize;
    SCD40_Sandbox.Touch.Initialize;
 
    SCD40_Sandbox.BME280.Configure
@@ -324,57 +114,18 @@ begin
       Temperature_Oversampling => 16,
       Humidity_Oversampling    => 16);
 
-   ---------------------------------------------------------------------------
-
-   --  Write_Data (0) := Register_Address;
-   --  Write_Data (0) := 16#36#;
-   --  Write_Data (1) := 16#82#;
-   --  Write_Data (0) := 16#23#;
-   --  Write_Data (1) := 16#22#;
-   --  Write_Data (0) := 16#E4#;
-   --  Write_Data (1) := 16#B8#;
-   --
-   --  SDC40_Sandbox.I2C.Write_Read
-   --    (A0B.SVD.STM32H723.I2C.I2C4_Periph,
-   --     Device_Address,
-   --     Write_Data,
-   --     Read_Data);
-
-   Get_Serial_Number;
-   A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
-
-   --  for J in 1 .. 52_000_000 loop
-   --     Idle := @ + 1;
-   --  end loop;
-
-   Set_Sensor_Altitude (550);
-   A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
-
-   --  Set_Temperature_Offset (0);
-   --  A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
-
-   --  Perfom_Factory_Reset;
-   --
-   --  for J in 1 .. 520_000_000 loop
-   --     Idle := @ + 1;
-   --  end loop;
-
-   Start_Periodic_Measurement;
+   SCD40_Sandbox.SCD40.Configure;
 
    loop
       A0B.Delays.Delay_For (A0B.Time.Milliseconds (250));
-      --  for J in 1 .. 500_000_000 loop
-      --     Idle := @ + 1;
-      --  end loop;
 
       SCD40_Sandbox.Touch.Get_Touch;
       SCD40_Sandbox.Display.Redraw_Touch;
 
       --  SCD40_Sandbox.Display.Redraw;
 
-      A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
-      Get_Data_Ready_Status;
-      --  A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
+      SCD40_Sandbox.SCD40.Get_Data_Ready_Status;
+      A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
       if Globals.Ready then
          declare
@@ -391,15 +142,15 @@ begin
 
          Globals.Light := BH1750.Get_Light_Value;
 
-         A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
-         Set_Ambient_Pressure
+         SCD40_Sandbox.SCD40.Set_Ambient_Pressure
            (A0B.Types.Unsigned_32'Min
               (110_000,
                A0B.Types.Unsigned_32'Max
                  (70_100, A0B.Types.Unsigned_32 (Globals.Pressure))));
-         A0B.Delays.Delay_For (A0B.Time.Milliseconds (2));
+         A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
-         Read_Measurement;
+         SCD40_Sandbox.SCD40.Read_Measurement;
+         A0B.Delays.Delay_For (A0B.Time.Milliseconds (1));
 
          SCD40_Sandbox.Display.Redraw;
       end if;

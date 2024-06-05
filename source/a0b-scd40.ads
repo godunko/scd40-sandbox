@@ -17,11 +17,13 @@ is
    Get_Data_Ready_Status      : constant := 16#E4B8#;
    Get_Serial_Number          : constant := 16#3682#;
    Read_Measurement           : constant := 16#EC05#;
+   Reinit                     : constant := 16#3646#;
    Perform_Factory_Reset      : constant := 16#3632#;
    Set_Ambient_Pressure       : constant := 16#E000#;
    Set_Sensor_Altitude        : constant := 16#2427#;
    Set_Temperature_Offset     : constant := 16#241D#;
    Start_Periodic_Measurement : constant := 16#21B1#;
+   Stop_Periodic_Measurement  : constant := 16#3F86#;
 
    --  type CO2_Concentration is range 0 .. 40_000;
    --
