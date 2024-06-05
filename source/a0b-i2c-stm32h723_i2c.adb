@@ -7,7 +7,6 @@
 pragma Restrictions (No_Elaboration_Code);
 pragma Ada_2022;
 
---  with Ada.Unchecked_Conversion;
 with System.Address_To_Access_Conversions;
 pragma Warnings (Off, """System.Atomic_Primitives"" is an internal GNAT unit");
 with System.Atomic_Primitives;
@@ -23,6 +22,12 @@ is
      (Self : in out Master_Controller'Class);
    --  Configure target address.
 
+   procedure Load_Into_TX (Self : in out Master_Controller'Class);
+   --  Write next byte into the TX register, switch buffer when necessary.
+
+   procedure Store_From_RX (Self : in out Master_Controller'Class);
+   --  Read next byte from the RX register, switch buffer when necessary.
+
    ------------------------------
    -- Configure_Target_Address --
    ------------------------------
@@ -34,7 +39,7 @@ is
         Device_Locks.Device (Self.Device_Lock).Target_Address;
 
    begin
-      if Self.State = Unused then
+      --  if Self.State = Initial then
          --  Set device address and addressing mode to do its only once.
 
          declare
@@ -52,19 +57,14 @@ is
 
             else
                Val.ADD10    := True;
-               Val.SADD.Val :=
-                 A0B.Types.Unsigned_10 (Target_Address);
-                 --    (A0B.Types.Shift_Left
-                 --       (A0B.Types.Unsigned_8 (Device.Address), 1));
-               --  In 7-bit addressing mode device address should be written to
-               --  SADD[7:1], so shift it left by one bit.
+               Val.SADD.Val := A0B.Types.Unsigned_10 (Target_Address);
+               --  In 7-bit addressing mode device address should be written
+               --  to SADD[7:1], so shift it left by one bit.
             end if;
 
             Self.Peripheral.CR2 := Val;
          end;
-
-         Self.State := Configured;
-      end if;
+      --  end if;
    end Configure_Target_Address;
 
    ---------------
@@ -237,6 +237,45 @@ is
 
    end Device_Locks;
 
+   ------------------
+   -- Load_Into_TX --
+   ------------------
+
+   procedure Load_Into_TX (Self : in out Master_Controller'Class) is
+      use type A0B.Types.Unsigned_32;
+      use type System.Address;
+      use type System.Storage_Elements.Storage_Offset;
+
+   begin
+      if Self.Address = System.Null_Address then
+         --  Start of the transfer
+
+         Self.Address := Self.Buffers (Self.Active).Address;
+      end if;
+
+      loop
+         exit when
+           Self.Buffers (Self.Active).Size
+             /= Self.Buffers (Self.Active).Bytes;
+
+         Self.Buffers (Self.Active).State := Success;
+
+         Self.Active  := @ + 1;
+         Self.Address := Self.Buffers (Self.Active).Address;
+      end loop;
+
+      declare
+         Data : constant A0B.Types.Unsigned_8
+           with Import, Address => Self.Address;
+
+      begin
+         Self.Peripheral.TXDR.TXDATA := Data;
+
+         Self.Address                     := @ + 1;
+         Self.Buffers (Self.Active).Bytes := @ + 1;
+      end;
+   end Load_Into_TX;
+
    ------------------------
    -- On_Error_Interrupt --
    ------------------------
@@ -251,103 +290,47 @@ is
    ------------------------
 
    procedure On_Event_Interrupt (Self : in out Master_Controller'Class) is
-
-      use type A0B.Types.Unsigned_32;
-
-      --  function Pending_Interrupts
-      --    (Status : A0B.SVD.STM32H723.I2C.ISR_Register;
-      --     Mask   : A0B.SVD.STM32H723.I2C.CR1_Register)
-      --     return A0B.SVD.STM32H723.I2C.ISR_Register;
-      --
-      --  ------------------------
-      --  -- Pending_Interrupts --
-      --  ------------------------
-      --
-      --  function Pending_Interrupts
-      --    (Status : A0B.SVD.STM32H723.I2C.ISR_Register;
-      --     Mask   : A0B.SVD.STM32H723.I2C.CR1_Register)
-      --     return A0B.SVD.STM32H723.I2C.ISR_Register
-      --  is
-      --     function To_Unsigned_32 is
-      --       new Ada.Unchecked_Conversion
-      --             (A0B.SVD.STM32H723.I2C.ISR_Register, A0B.Types.Unsigned_32);
-      --
-      --     function To_Unsigned_32 is
-      --       new Ada.Unchecked_Conversion
-      --             (A0B.SVD.STM32H723.I2C.CR1_Register, A0B.Types.Unsigned_32);
-      --
-      --     function To_ISR_Register is
-      --       new Ada.Unchecked_Conversion
-      --         (A0B.Types.Unsigned_32, A0B.SVD.STM32H723.I2C.ISR_Register);
-      --
-      --  begin
-      --     return
-      --       To_ISR_Register
-      --         (To_Unsigned_32 (Status) and To_Unsigned_32 (Mask));
-      --  end Pending_Interrupts;
-
       Status  : constant A0B.SVD.STM32H723.I2C.ISR_Register :=
         Self.Peripheral.ISR;
       Mask    : constant A0B.SVD.STM32H723.I2C.CR1_Register :=
         Self.Peripheral.CR1;
-      --  Pending : constant A0B.SVD.STM32H723.I2C.ISR_Register :=
-      --    Pending_Interrupts (Status, Mask);
 
    begin
-      --  if Status.TXIS and Mask.TXIE then
-      --  if Status.TXIS and not Self.Peripheral.CR2.RD_WRN then
       if Status.TXIS then
-         --  raise Program_Error;
-         Self.Peripheral.TXDR.TXDATA := Self.Buffer (Self.Status.Bytes);
-         Self.Status.Bytes           := @ + 1;
+         Self.Load_Into_TX;
       end if;
 
       if Status.RXNE then
-         Self.Buffer (Self.Status.Bytes) := Self.Peripheral.RXDR.RXDATA;
-         Self.Status.Bytes               := @ + 1;
+         Self.Store_From_RX;
       end if;
 
       if Status.TC and Mask.TCIE then
          Self.Peripheral.CR1.TCIE := False;
-         --  Disable TCR and TC interrupts, software should write to NBYTES
-         --  to clear this flag. It will be re-enabled after this write by
-         --  Write/Read procedure.
+         --  Disable TC (and TCR) interrupt, it is active till master sends
+         --  START/STOP condition. Device driver need to be notified only
+         --  once, and there is nothing to do till ball is on device driver's
+         --  side.
 
-         --  --  Disable TC interrupt, it is active till master sends START/STOP
-         --  --  condition. Device driver need to be notified only once, and
-         --  --  there is nothing to do till ball is on device driver's side.
-         --  --
-         --  --  This supports case when driver can't release controller or
-         --  --  initiate next transfer immidiately.
+         if Self.Stop then
+            Self.Peripheral.CR2.STOP := True;
+         end if;
 
-         --  raise Program_Error;
-         Self.Status.State := Success;
          Device_Locks.Device (Self.Device_Lock).On_Transfer_Completed;
       end if;
 
       if Status.NACKF then
-         --  raise Program_Error;
          Self.Peripheral.ICR.NACKCF := True;
 
-         if not Status.TXE then
-            --  Byte was not transmitted, decrement counter and flush transmit
-            --  data regitser.
-
-            Self.Status.Bytes := @ - 1;
-            Self.Peripheral.ISR.TXE := True;
-         end if;
-
-         --  Self.Status.State := Success;  --  ???
-         Self.Status.State := Failure;  --  ???
-         Device_Locks.Device (Self.Device_Lock).On_Transfer_Completed;
-   --        Self.Release_Device;
-   --        --  Self.Busy := False;
-   --        --  raise Program_Error;
+         for J in Self.Active .. Self.Buffers'Last loop
+            Self.Buffers (Self.Active).State := Failure;
+         end loop;
       end if;
-   --
+
       if Status.STOPF then
          Self.Peripheral.ICR.STOPCF := True;
          --  Clear STOPF interrupt status
+
+         --  if Self.  ???? Set status of the buffer ???
 
          declare
             Device  : constant I2C_Device_Driver_Access :=
@@ -356,7 +339,6 @@ is
 
          begin
             Device_Locks.Release (Self.Device_Lock, Device, Success);
-            Self.State := Unused;
 
             Device.On_Transaction_Completed;
          end;
@@ -375,13 +357,9 @@ is
          --  Device_Locks.Device (Self.Device_Lock).On_Transfer_Completed;
       end if;
 
-   --     --  if Self.Peripheral.ISR.ADDR then
-   --     --     raise Program_Error;
-   --     --  end if;
-   --
---  begin
-      --  null;
-      --  raise Program_Error;
+      if Self.Peripheral.ISR.ADDR then
+         raise Program_Error;
+      end if;
    end On_Event_Interrupt;
 
    ----------
@@ -391,29 +369,39 @@ is
    overriding procedure Read
      (Self    : in out Master_Controller;
       Device  : not null I2C_Device_Driver_Access;
-      Buffer  : out Unsigned_8_Array;
-      Status  : aliased out Transfer_Status;
+      Buffers : in out Buffer_Descriptor_Array;
       Stop    : Boolean;
-      Success : in out Boolean) is
+      Success : in out Boolean)
+   is
+      use type A0B.Types.Unsigned_32;
+
+      Size : A0B.Types.Unsigned_32 := 0;
+
    begin
       Device_Locks.Acquire (Self.Device_Lock, Device, Success);
 
+      if not Success then
+         return;
+      end if;
+
+      for Buffer of Buffers loop
+         Size := @ + Buffer.Size;
+
+         Buffer.Bytes := 0;
+         Buffer.State := Active;
+      end loop;
+
+      Self.Buffers := Buffers'Unrestricted_Access;
+      Self.Active  := 0;
+      Self.Address := System.Null_Address;
+      Self.Stop    := Stop;
+
       Self.Configure_Target_Address;
 
-      Self.Buffer :=
-        (if Buffer'Length = 0 then null else Buffer'Unrestricted_Access);
-      Self.Status := Status'Unchecked_Access;
-      Self.State  := Read;
-
-      Self.Status.all := (Bytes => 0, State => Active);
-
-      A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
-      --  Disable event interrup from the peripheral controller to prevent
-      --  undesired TC interrupt (it will be cleared by send of the START
-      --  condition).
-
-      Self.Peripheral.CR1.TCIE := True;
-      --  Enable TC and TCE interrupts.
+      --  A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
+      --  --  Disable event interrup from the peripheral controller to prevent
+      --  --  undesired TC interrupt (it will be cleared by send of the START
+      --  --  condition).
 
       --  Set transfer parameters and send (Re)START condition.
 
@@ -422,56 +410,23 @@ is
 
       begin
          Val.RD_WRN  := True;           --  Master requests a read transfer.
-         Val.NBYTES  := Buffer'Length;  --  Number of bytes to be transfered.
+         Val.NBYTES  := A0B.Types.Unsigned_8 (Size);
+         --  Number of bytes to be transfered.
 
          Val.AUTOEND := False;
          Val.RELOAD  := False;
          Val.START   := True;
          --  Val.RELOAD  := True;
-         --  Val.START   := Self.State /= Read;
-         --  if Self.State /= Read then
-
-         --
-         --     --  Send (Re)START condition
-         --
-         --     Val.START := True;
-         --  end if;
 
          Self.Peripheral.CR2 := Val;
       end;
 
-      A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
-      A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
-      --  Clear pending interrupt status and enable interrupt.
+      Self.Peripheral.CR1.TCIE := True;
+      --  Enable TC and TCE interrupts.
 
-      --  Self.Peripheral.CR1.TCIE := True;
-
-      --  Self.Transfer :=
-      --    (Operation => Read,
-      --     Buffer    => Self.Read_Buffer,
-      --     Index     => 0);
-      --
-      --  --  Self.Controller.Peripheral.CR1.TCIE := True;
-      --
-      --  --  Prepare to read and send ReSTART condition
-      --
-      --  declare
-      --     Val : A0B.SVD.STM32H723.I2C.CR2_Register :=
-      --       Self.Controller.Peripheral.CR2;
-      --
-      --  begin
-      --     Val.RD_WRN  := True;  --  Master requests a read transfer.
-      --     Val.NBYTES  := Self.Transfer.Buffer'Length;
-      --
-      --     Val.AUTOEND := False;
-      --     Val.RELOAD  := False;
-      --
-      --     Val.START   := True;
-      --
-      --     Self.Controller.Peripheral.CR2 := Val;
-      --  end;
-      --
-      --  Self.Controller.Peripheral.CR1.TCIE := True;
+      --  A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
+      --  A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
+      --  --  Clear pending interrupt status and enable interrupt.
    end Read;
 
    ----------
@@ -483,48 +438,48 @@ is
       Device  : not null I2C_Device_Driver_Access;
       Success : in out Boolean) is
    begin
-
-      A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
-      --  Disable event interrup from the peripheral controller to prevent
-      --  undesired TC interrupt (it will be cleared by send of the START
-      --  condition).
-
-      Self.Peripheral.CR1.TCIE := True;
-      --  Enable TC and TCE interrupts.
-
-      --  Send STOP condition.
-
-      Self.Peripheral.CR2.STOP := True;
-
-      --  declare
-      --     Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
       --
-      --  begin
-      --     Val.RD_WRN  := True;           --  Master requests a read transfer.
-      --     Val.NBYTES  := Buffer'Length;  --  Number of bytes to be transfered.
+      --  A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
+      --  --  Disable event interrup from the peripheral controller to prevent
+      --  --  undesired TC interrupt (it will be cleared by send of the START
+      --  --  condition).
       --
-      --     Val.AUTOEND := False;
-      --     Val.RELOAD  := False;
-      --     Val.START   := True;
-      --     --  Val.RELOAD  := True;
-      --     --  Val.START   := Self.State /= Read;
-      --     --  if Self.State /= Read then
+      --  Self.Peripheral.CR1.TCIE := True;
+      --  --  Enable TC and TCE interrupts.
       --
-      --     --
-      --     --     --  Send (Re)START condition
-      --     --
-      --     --     Val.START := True;
-      --     --  end if;
+      --  --  Send STOP condition.
       --
-      --     Self.Peripheral.CR2 := Val;
-      --  end;
-
-      A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
-      A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
-      --  Clear pending interrupt status and enable interrupt.
-
-      --  null;
-      --  raise Program_Error;
+      --  Self.Peripheral.CR2.STOP := True;
+      --
+      --  --  declare
+      --  --     Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
+      --  --
+      --  --  begin
+      --  --     Val.RD_WRN  := True;           --  Master requests a read transfer.
+      --  --     Val.NBYTES  := Buffer'Length;  --  Number of bytes to be transfered.
+      --  --
+      --  --     Val.AUTOEND := False;
+      --  --     Val.RELOAD  := False;
+      --  --     Val.START   := True;
+      --  --     --  Val.RELOAD  := True;
+      --  --     --  Val.START   := Self.State /= Read;
+      --  --     --  if Self.State /= Read then
+      --  --
+      --  --     --
+      --  --     --     --  Send (Re)START condition
+      --  --     --
+      --  --     --     Val.START := True;
+      --  --     --  end if;
+      --  --
+      --  --     Self.Peripheral.CR2 := Val;
+      --  --  end;
+      --
+      --  A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
+      --  A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
+      --  --  Clear pending interrupt status and enable interrupt.
+      --
+      --  --  null;
+      raise Program_Error;
    end Stop;
 
    -----------
@@ -545,6 +500,43 @@ is
       Self.Configure_Target_Address;
    end Start;
 
+   -------------------
+   -- Store_From_RX --
+   -------------------
+
+   procedure Store_From_RX (Self : in out Master_Controller'Class) is
+      use type A0B.Types.Unsigned_32;
+      use type System.Address;
+      use type System.Storage_Elements.Storage_Offset;
+
+   begin
+      if Self.Address = System.Null_Address then
+         --  Start of the transfer
+
+         Self.Address := Self.Buffers (Self.Active).Address;
+      end if;
+
+      loop
+         exit when
+           Self.Buffers (Self.Active).Size
+             /= Self.Buffers (Self.Active).Bytes;
+
+         Self.Active  := @ + 1;
+         Self.Address := Self.Buffers (Self.Active).Address;
+      end loop;
+
+      declare
+         Data : A0B.Types.Unsigned_8
+           with Import, Address => Self.Address;
+
+      begin
+         Data := Self.Peripheral.RXDR.RXDATA;
+
+         Self.Address                     := @ + 1;
+         Self.Buffers (Self.Active).Bytes := @ + 1;
+      end;
+   end Store_From_RX;
+
    -----------
    -- Write --
    -----------
@@ -552,45 +544,39 @@ is
    overriding procedure Write
      (Self    : in out Master_Controller;
       Device  : not null I2C_Device_Driver_Access;
-      Buffer  : Unsigned_8_Array;
-      Status  : aliased out Transfer_Status;
+      Buffers : in out Buffer_Descriptor_Array;
       Stop    : Boolean;
       Success : in out Boolean)
    is
       use type A0B.Types.Unsigned_32;
 
+      Size : A0B.Types.Unsigned_32 := 0;
+
    begin
       Device_Locks.Acquire (Self.Device_Lock, Device, Success);
 
+      if not Success then
+         return;
+      end if;
+
+      for Buffer of Buffers loop
+         Size := @ + Buffer.Size;
+
+         Buffer.Bytes := 0;
+         Buffer.State := Active;
+      end loop;
+
+      Self.Buffers := Buffers'Unrestricted_Access;
+      Self.Active  := 0;
+      Self.Address := System.Null_Address;
+      Self.Stop    := Stop;
+
       Self.Configure_Target_Address;
 
-      Self.Buffer :=
-        (if Buffer'Length = 0 then null else Buffer'Unrestricted_Access);
-      Self.Status := Status'Unchecked_Access;
-
-      Self.Status.all := (Bytes => 0, State => Active);
-      Self.State := Write;
-
-      --  Self.Write_Buffer :=
-      --    (if Write_Buffer'Length = 0
-      --     then null
-      --     else Write_Buffer'Unrestricted_Access);
-      --  Self.Read_Buffer  := null;
-      --  Self.Done         := Done;
-      --  Self.Busy         := True;
-      --
-      --  Self.Transfer :=
-      --    (Operation => Write,
-      --     Buffer    => Self.Write_Buffer,
-      --     Index     => 0);
-
-      A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
-      --  Disable event interrup from the peripheral controller to prevent
-      --  undesired TC interrupt (it will be cleared by send of the START
-      --  condition).
-
-      Self.Peripheral.CR1.TCIE := True;
-      --  Enable TC and TCE interrupts.
+      --  A0B.ARMv7M.NVIC_Utilities.Disable_Interrupt (Self.Event_Interrupt);
+      --  --  Disable event interrup from the peripheral controller to prevent
+      --  --  undesired TC interrupt (it will be cleared by send of the START
+      --  --  condition).
 
       --  Apply workaround.
       --
@@ -599,9 +585,8 @@ is
       --  "Write the first data in I2C_TXDR before the transmission
       --  starts."
 
-      if Self.Buffer /= null then
-         Self.Peripheral.TXDR.TXDATA := Self.Buffer (Self.Status.Bytes);
-         Self.Status.Bytes := @ + 1;
+      if Size /= 0 then
+         Self.Load_Into_TX;
       end if;
 
       --  Set transfer parameters and send (Re)START condition.
@@ -610,8 +595,9 @@ is
          Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
 
       begin
-         Val.RD_WRN  := False;          --  Master requests a write transfer.
-         Val.NBYTES  := Buffer'Length;  --  Number of bytes to be transfered.
+         Val.RD_WRN  := False;  --  Master requests a write transfer.
+         Val.NBYTES  := A0B.Types.Unsigned_8 (Size);
+         --  Number of bytes to be transfered.
 
          Val.AUTOEND := False;
          Val.RELOAD  := False;
@@ -620,27 +606,12 @@ is
          Self.Peripheral.CR2 := Val;
       end;
 
-      --  if Self.State /= Write then
-      --  end if;
+      Self.Peripheral.CR1.TCIE := True;
+      --  Enable TC and TCE interrupts.
 
-      --  Self.Peripheral.CR2.START := True;
-      --  --  Send (Re)START condition
-
-      A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
-      A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
-      --  Clear pending interrupt status and enable interrupt.
-
-      --  Self.Peripheral.CR1.TCIE := True;
-      --  --  Wait till done
-      --
-      --  while Self.Busy loop
-      --     null;
-      --  end loop;
-      --  --  while Self.Controller.Peripheral.ISR.BUSY loop
-      --  --     null;
-      --  --  end loop;
-      null;
-      --  raise Program_Error;
+      --  A0B.ARMv7M.NVIC_Utilities.Clear_Pending (Self.Event_Interrupt);
+      --  A0B.ARMv7M.NVIC_Utilities.Enable_Interrupt (Self.Event_Interrupt);
+      --  --  Clear pending interrupt status and enable interrupt.
    end Write;
 
 end A0B.I2C.STM32H723_I2C;

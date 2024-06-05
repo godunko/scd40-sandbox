@@ -59,8 +59,8 @@ private
 
    end Device_Locks;
 
-   type Controller_State is
-     (Unused, Configured, Read, Write, Stop_Requested);
+   --  type Controller_State is
+   --    (Unused, Configured, Read, Write, Stop_Requested);
 
    type Master_Controller
      (Peripheral      : not null access A0B.SVD.STM32H723.I2C.I2C_Peripheral;
@@ -68,9 +68,13 @@ private
       Error_Interrupt : A0B.ARMv7M.External_Interrupt_Number) is
    limited new I2C_Bus_Master with record
       Device_Lock : Device_Locks.Lock;
-      State       : Controller_State := Unused;
-      Buffer      : access Unsigned_8_Array;
-      Status      : access Transfer_Status;
+      --  State       : Controller_State := Unused;
+      --  Buffer      : access Unsigned_8_Array;
+      --  Status      : access Transfer_Status;
+      Buffers     : access Buffer_Descriptor_Array;
+      Active      : A0B.Types.Unsigned_32;
+      Address     : System.Address;
+      Stop        : Boolean;
    end record;
 
    overriding procedure Start
@@ -81,16 +85,14 @@ private
    overriding procedure Write
      (Self    : in out Master_Controller;
       Device  : not null I2C_Device_Driver_Access;
-      Buffer  : Unsigned_8_Array;
-      Status  : aliased out Transfer_Status;
+      Buffers : in out Buffer_Descriptor_Array;
       Stop    : Boolean;
       Success : in out Boolean);
 
    overriding procedure Read
      (Self    : in out Master_Controller;
       Device  : not null I2C_Device_Driver_Access;
-      Buffer  : out Unsigned_8_Array;
-      Status  : aliased out Transfer_Status;
+      Buffers : in out Buffer_Descriptor_Array;
       Stop    : Boolean;
       Success : in out Boolean);
 
