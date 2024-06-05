@@ -24,16 +24,14 @@ package body SCD40_Sandbox.BH1750 is
 
       use type A0B.Types.Unsigned_16;
 
-      Command  : A0B.I2C.Unsigned_8_Array (1 .. 0);
       Response : A0B.I2C.Unsigned_8_Array (0 .. 1);
       Success  : Boolean := True;
       Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
-      BH_Sensor_Slave.Write_Read
-        (Command,
-         Response,
+      BH_Sensor_Slave.Read
+        (Response,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
