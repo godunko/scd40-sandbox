@@ -8,6 +8,8 @@
 --
 --  This sensor requires delay between write and read operations without close
 --  of the bus transaction.
+--
+--  Names of subprograms corresponds to SCD40 documentation.
 
 pragma Restrictions (No_Elaboration_Code);
 
@@ -18,6 +20,8 @@ private with A0B.Timer;
 package A0B.I2C.SCD40
   with Preelaborate
 is
+
+   type SCD40_Command is mod 2**16;
 
    type Transaction_Status is record
       Written_Octets : A0B.Types.Unsigned_32;
@@ -31,43 +35,62 @@ is
      limited new Abstract_I2C_Device_Driver with private
        with Preelaborable_Initialization;
 
-   procedure Write
+   procedure Send_Command
      (Self         : in out SCD40_Driver'Class;
-      Buffer       : Unsigned_8_Array;
+      Command      : SCD40_Command;
       Status       : aliased out Transaction_Status;
       On_Completed : A0B.Callbacks.Callback;
       Success      : in out Boolean);
 
-   procedure Write_Read
+   procedure Write
+     (Self         : in out SCD40_Driver'Class;
+      Command      : SCD40_Command;
+      Input        : Unsigned_8_Array;
+      Status       : aliased out Transaction_Status;
+      On_Completed : A0B.Callbacks.Callback;
+      Success      : in out Boolean);
+
+   procedure Read
      (Self           : in out SCD40_Driver'Class;
-      Write_Buffer   : Unsigned_8_Array;
+      Command        : SCD40_Command;
+      Response       : out Unsigned_8_Array;
       Delay_Interval : A0B.Time.Time_Span;
-      Read_Buffer    : out Unsigned_8_Array;
+      Status         : aliased out Transaction_Status;
+      On_Completed   : A0B.Callbacks.Callback;
+      Success        : in out Boolean);
+
+   procedure Send_Command_And_Fetch_Result
+     (Self           : in out SCD40_Driver'Class;
+      Command        : SCD40_Command;
+      Input          : Unsigned_8_Array;
+      Delay_Interval : A0B.Time.Time_Span;
+      Response       : out Unsigned_8_Array;
       Status         : aliased out Transaction_Status;
       On_Completed   : A0B.Callbacks.Callback;
       Success        : in out Boolean);
 
 private
 
-   type Transfer_Descriptor is record
-      Buffer : access Unsigned_8_Array;
-      Status : aliased Transfer_Status;
-   end record;
-
-   subtype Active_Transfer is A0B.Types.Unsigned_32;
-
-   type Transfer_Decsriptor_Array is
-     array (Active_Transfer range 0 .. 1) of Transfer_Descriptor;
+   type State is
+     (Initial,
+      Command,       --  write command
+      Command_Read,  --  write command, read response
+      Write,         --  write command and data
+      Write_Read,    --  write command and data, read response
+      Read);         --  read response
 
    type SCD40_Driver
      (Controller : not null access I2C_Bus_Master'Class;
       Address    : Device_Address) is
    limited new Abstract_I2C_Device_Driver with record
+      State          : SCD40.State := Initial;
       Delay_Interval : A0B.Time.Time_Span;
-      Transfers      : Transfer_Decsriptor_Array;
-      Current        : Active_Transfer;
-      Transaction    : access Transaction_Status;
       On_Completed   : A0B.Callbacks.Callback;
+      Transaction    : access Transaction_Status;
+
+      Command_Buffer : A0B.I2C.Unsigned_8_Array (0 .. 1);
+      Write_Buffers  : A0B.I2C.Buffer_Descriptor_Array (0 .. 1);
+      Read_Buffers   : A0B.I2C.Buffer_Descriptor_Array (0 .. 0);
       Timeout        : aliased A0B.Timer.Timeout_Control_Block;
    end record;
 
