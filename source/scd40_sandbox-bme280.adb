@@ -7,7 +7,7 @@
 with Ada.Unchecked_Conversion;
 
 with A0B.Delays;
-with A0B.I2C.Device_Drivers;
+with A0B.I2C.Device_Drivers_8;
 with A0B.I2C.STM32H723_I2C.I2C4;
 with A0B.Time;
 with A0B.Types.GCC_Builtins;
@@ -19,7 +19,7 @@ package body SCD40_Sandbox.BME280
 is
 
    BME_Sensor_Slave :
-     A0B.I2C.Device_Drivers.I2C_Device_Driver
+     A0B.I2C.Device_Drivers_8.I2C_Device_Driver
        (A0B.I2C.STM32H723_I2C.I2C4.I2C4'Access, BME280_I2C_Address);
 
    CALIB00_Address   : constant := 16#88#;
@@ -173,26 +173,26 @@ is
 
       --  Ctrl_Hum        : Ctrl_Hum_Register :=
       --    (osrs_h => To_Oversamplig (Humidity_Oversampling), others => <>);
-      Command  : A0B.I2C.Unsigned_8_Array (0 .. 1);
-      Success  : Boolean := True;
-      Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
-      Await    : aliased SCD40_Sandbox.Await.Await;
+      Buffer  : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Success : Boolean := True;
+      Status  : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
+      Await   : aliased SCD40_Sandbox.Await.Await;
 
    begin
       --  Humidity, must be configured before pressure/temperature.
 
       declare
          Ctrl_Hum : Ctrl_Hum_Register
-           with Import, Address => Command (1)'Address;
+           with Import, Address => Buffer (0)'Address;
 
       begin
-         Command (0) := CTRL_HUM_Address;
          Ctrl_Hum    :=
            (osrs_h => To_Oversamplig (Humidity_Oversampling), others => <>);
       end;
 
       BME_Sensor_Slave.Write
-        (Command,
+        (CTRL_HUM_Address,
+         Buffer,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
@@ -203,10 +203,9 @@ is
 
       declare
          Ctrl_Meas : Ctrl_Meas_Register
-           with Import, Address => Command (1)'Address;
+           with Import, Address => Buffer (0)'Address;
 
       begin
-         Command (0) := CTRL_MEAS_Address;
          Ctrl_Meas   :=
            (mode   => Sleep,
             osrs_p => To_Oversamplig (Pressure_Oversampling),
@@ -214,7 +213,8 @@ is
       end;
 
       BME_Sensor_Slave.Write
-        (Command,
+        (CTRL_MEAS_Address,
+         Buffer,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
@@ -226,10 +226,9 @@ is
 
       declare
          Config : Config_Register
-           with Import, Address => Command (1)'Address;
+           with Import, Address => Buffer (0)'Address;
 
       begin
-         Command (0) := CONFIG_Address;
          Config      :=
            (spi3w_en => False,
             filter   => 2#100#,  --  IIR filter is on, 16
@@ -238,7 +237,8 @@ is
       end;
 
       BME_Sensor_Slave.Write
-        (Command,
+        (CONFIG_Address,
+         Buffer,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
@@ -248,10 +248,9 @@ is
 
       declare
          Ctrl_Meas : Ctrl_Meas_Register
-           with Import, Address => Command (1)'Address;
+           with Import, Address => Buffer (0)'Address;
 
       begin
-         Command (0) := CTRL_MEAS_Address;
          Ctrl_Meas   :=
            (mode   => Mode,
             osrs_p => To_Oversamplig (Pressure_Oversampling),
@@ -259,7 +258,8 @@ is
       end;
 
       BME_Sensor_Slave.Write
-        (Command,
+        (CTRL_MEAS_Address,
+         Buffer,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
@@ -271,28 +271,23 @@ is
    --------------------------
 
    procedure Get_Calibration_Data is
-      Command     : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response_00 : CALIB00_CALIB25_Response;
       Response_26 : CALIB26_CALIB41_Response;
       Success     : Boolean := True;
-      Status      : aliased A0B.I2C.Device_Drivers.Transaction_Status;
+      Status      : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await       : aliased SCD40_Sandbox.Await.Await;
 
    begin
-      Command (0) := CALIB00_Address;
-
-      BME_Sensor_Slave.Write_Read
-        (Command,
+      BME_Sensor_Slave.Read
+        (CALIB00_Address,
          Response_00,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
 
-      Command (0) := CALIB26_Address;
-
-      BME_Sensor_Slave.Write_Read
-        (Command,
+      BME_Sensor_Slave.Read
+        (CALIB26_Address,
          Response_26,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
@@ -307,17 +302,14 @@ is
    -----------------
 
    function Get_Chip_Id return A0B.Types.Unsigned_8 is
-      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Success  : Boolean := True;
-      Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
+      Status   : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
-      Command (0) := CHIP_ID_Address;
-
-      BME_Sensor_Slave.Write_Read
-        (Command,
+      BME_Sensor_Slave.Read
+        (CHIP_ID_Address,
          Response,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
@@ -453,11 +445,10 @@ is
    ---------------------
 
    function Get_Sensor_Data return Sensor_Data is
-      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response : Measure_Data_Response;
       Success  : Boolean := True;
       Await    : aliased SCD40_Sandbox.Await.Await;
-      Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
+      Status   : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Result   : Sensor_Data;
 
    begin
@@ -486,10 +477,8 @@ is
       --     end;
       --  end;
 
-      Command (0) := PRESS_MSB_Address;
-
-      BME_Sensor_Slave.Write_Read
-        (Command,
+      BME_Sensor_Slave.Read
+        (PRESS_MSB_Address,
          Response,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
@@ -506,18 +495,15 @@ is
    ----------------
 
    function Get_Status return Status_Register is
-      Command  : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Result   : Status_Register with Import, Address => Response (0)'Address;
       Success  : Boolean := True;
-      Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
+      Status   : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
 
    begin
-      Command (0) := STATUS_Address;
-
-      BME_Sensor_Slave.Write_Read
-        (Command,
+      BME_Sensor_Slave.Read
+        (STATUS_Address,
          Response,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
@@ -659,17 +645,17 @@ is
    ----------------
 
    procedure Soft_Reset is
-      Command : A0B.I2C.Unsigned_8_Array (0 .. 1);
+      Buffer  : A0B.I2C.Unsigned_8_Array (0 .. 0);
       Success : Boolean := True;
-      Status  : aliased A0B.I2C.Device_Drivers.Transaction_Status;
+      Status  : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await   : aliased SCD40_Sandbox.Await.Await;
 
    begin
-      Command (0) := RESET_Address;
-      Command (1) := RESET_KEY;
+      Buffer (0) := RESET_KEY;
 
       BME_Sensor_Slave.Write
-        (Command,
+        (RESET_Address,
+         Buffer,
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
