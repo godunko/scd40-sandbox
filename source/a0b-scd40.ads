@@ -14,26 +14,22 @@ is
 
    SCD40_I2C_Address : constant A0B.Types.Unsigned_7 := 16#62#;
 
+   Get_Data_Ready_Status      : constant := 16#E4B8#;
+   Get_Serial_Number          : constant := 16#3682#;
+   Read_Measurement           : constant := 16#EC05#;
+   Perform_Factory_Reset      : constant := 16#3632#;
+   Set_Ambient_Pressure       : constant := 16#E000#;
+   Set_Sensor_Altitude        : constant := 16#2427#;
+   Set_Temperature_Offset     : constant := 16#241D#;
+   Start_Periodic_Measurement : constant := 16#21B1#;
+
    --  type CO2_Concentration is range 0 .. 40_000;
    --
    --  type Temperature is delta 1/2*15 range ;
 
    --
 
-   subtype Start_Periodic_Measument_Command
-     is A0B.I2C.Unsigned_8_Array (0 .. 1);
-
-   procedure Build_Start_Periodic_Measument_Command
-     (Buffer : out Start_Periodic_Measument_Command);
-
-   --
-
-   subtype Read_Measurement_Command is A0B.I2C.Unsigned_8_Array (0 .. 1);
-
    subtype Read_Measurement_Response is A0B.I2C.Unsigned_8_Array (0 .. 8);
-
-   procedure Build_Read_Measurement_Command
-     (Buffer : out Read_Measurement_Command);
 
    procedure Parse_Read_Measurement_Response
      (Buffer  : Read_Measurement_Response;
@@ -44,10 +40,10 @@ is
 
    --  3.6.1 set_temperature_offset
 
-   subtype Set_Temperature_Offset_Command is A0B.I2C.Unsigned_8_Array (0 .. 4);
+   subtype Set_Temperature_Offset_Input is A0B.I2C.Unsigned_8_Array (0 .. 2);
 
-   procedure Build_Set_Temperature_Offset_Command
-     (Buffer   : out Set_Temperature_Offset_Command;
+   procedure Build_Set_Temperature_Offset_Input
+     (Buffer   : out Set_Temperature_Offset_Input;
       Altitude : A0B.Types.Unsigned_16);
    --  Set temperature offset inside the customer device.
    --
@@ -55,10 +51,10 @@ is
 
    --  3.6.3 set_sensor_altitude
 
-   subtype Set_Sensor_Altitude_Command is A0B.I2C.Unsigned_8_Array (0 .. 4);
+   subtype Set_Sensor_Altitude_Input is A0B.I2C.Unsigned_8_Array (0 .. 2);
 
-   procedure Build_Set_Sensor_Altitude_Command
-     (Buffer   : out Set_Sensor_Altitude_Command;
+   procedure Build_Set_Sensor_Altitude_Input
+     (Buffer   : out Set_Sensor_Altitude_Input;
       Altitude : A0B.Types.Unsigned_16);
    --  Set altitude in meters.
    --
@@ -66,10 +62,10 @@ is
 
    --  3.6.5 set_ambient_pressure
 
-   subtype Set_Ambient_Pressure_Command is A0B.I2C.Unsigned_8_Array (0 .. 4);
+   subtype Set_Ambient_Pressure_Input is A0B.I2C.Unsigned_8_Array (0 .. 2);
 
-   procedure Build_Set_Ambient_Pressure_Command
-     (Buffer   : out Set_Ambient_Pressure_Command;
+   procedure Build_Set_Ambient_Pressure_Input
+     (Buffer   : out Set_Ambient_Pressure_Input;
       Pressure : A0B.Types.Unsigned_32);
    --  Pressure is specified in Pa.
    --
@@ -77,12 +73,8 @@ is
 
    --
 
-   subtype Get_Data_Ready_Status_Command is A0B.I2C.Unsigned_8_Array (0 .. 1);
-
-   subtype Get_Data_Ready_Status_Response is A0B.I2C.Unsigned_8_Array (0 .. 2);
-
-   procedure Build_Get_Data_Ready_Status_Command
-     (Buffer : out Get_Data_Ready_Status_Command);
+   subtype Get_Data_Ready_Status_Response
+     is A0B.I2C.Unsigned_8_Array (0 .. 2);
 
    procedure Parse_Get_Data_Ready_Status_Response
      (Response_Buffer : Get_Data_Ready_Status_Response;
@@ -91,25 +83,13 @@ is
 
    --  3.9.2 get_serial_number
 
-   subtype Get_Serial_Number_Command is A0B.I2C.Unsigned_8_Array (0 .. 1);
-
    subtype Get_Serial_Number_Response is A0B.I2C.Unsigned_8_Array (0 .. 8);
 
    type Serial_Number is mod 2 ** 48;
-
-   procedure Build_Serial_Number_Command
-     (Buffer : out Get_Serial_Number_Command);
 
    procedure Parse_Get_Serial_Number_Response
      (Buffer        : Get_Serial_Number_Response;
       Serial_Number : out SCD40.Serial_Number;
       Success       : in out Boolean);
-
-   --  3.9.4 perfom_factory_reset
-
-   subtype Perfom_Factory_Reset_Command is A0B.I2C.Unsigned_8_Array (0 .. 1);
-
-   procedure Build_Perfom_Factory_Reset_Command
-     (Buffer : out Perfom_Factory_Reset_Command);
 
 end A0B.SCD40;

@@ -17,45 +17,12 @@ package body A0B.SCD40 is
    function Sensirion_CRC
      (Data : A0B.I2C.Unsigned_8_Array) return A0B.Types.Unsigned_8;
 
-   -----------------------------------------
-   -- Build_Get_Data_Ready_Status_Command --
-   -----------------------------------------
+   --------------------------------------
+   -- Build_Set_Ambient_Pressure_Input --
+   --------------------------------------
 
-   procedure Build_Get_Data_Ready_Status_Command
-     (Buffer : out Get_Data_Ready_Status_Command) is
-   begin
-      Buffer (0) := 16#E4#;
-      Buffer (1) := 16#B8#;
-   end Build_Get_Data_Ready_Status_Command;
-
-   ----------------------------------------
-   -- Build_Perfom_Factory_Reset_Command --
-   ----------------------------------------
-
-   procedure Build_Perfom_Factory_Reset_Command
-     (Buffer : out Perfom_Factory_Reset_Command) is
-   begin
-      Buffer (0) := 16#36#;
-      Buffer (1) := 16#32#;
-   end Build_Perfom_Factory_Reset_Command;
-
-   ---------------------------------
-   -- Build_Serial_Number_Command --
-   ---------------------------------
-
-   procedure Build_Serial_Number_Command
-     (Buffer : out Get_Serial_Number_Command) is
-   begin
-      Buffer (0) := 16#36#;
-      Buffer (1) := 16#82#;
-   end Build_Serial_Number_Command;
-
-   ----------------------------------------
-   -- Build_Set_Ambient_Pressure_Command --
-   ----------------------------------------
-
-   procedure Build_Set_Ambient_Pressure_Command
-     (Buffer   : out Set_Ambient_Pressure_Command;
+   procedure Build_Set_Ambient_Pressure_Input
+     (Buffer   : out Set_Ambient_Pressure_Input;
       Pressure : A0B.Types.Unsigned_32)
    is
       use type A0B.Types.Unsigned_32;
@@ -68,19 +35,17 @@ package body A0B.SCD40 is
         A0B.Types.Unsigned_8 (Value and 16#FF#);
 
    begin
-      Buffer (0) := 16#E0#;
-      Buffer (1) := 16#00#;
-      Buffer (2) := H;
-      Buffer (3) := L;
-      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
-   end Build_Set_Ambient_Pressure_Command;
+      Buffer (0) := H;
+      Buffer (1) := L;
+      Buffer (2) := Sensirion_CRC (Buffer (0 .. 1));
+   end Build_Set_Ambient_Pressure_Input;
 
-   ---------------------------------------
-   -- Build_Set_Sensor_Altitude_Command --
-   ---------------------------------------
+   -------------------------------------
+   -- Build_Set_Sensor_Altitude_Input --
+   -------------------------------------
 
-   procedure Build_Set_Sensor_Altitude_Command
-     (Buffer   : out Set_Sensor_Altitude_Command;
+   procedure Build_Set_Sensor_Altitude_Input
+     (Buffer   : out Set_Sensor_Altitude_Input;
       Altitude : A0B.Types.Unsigned_16)
    is
       H     : constant A0B.Types.Unsigned_8 :=
@@ -89,19 +54,17 @@ package body A0B.SCD40 is
         A0B.Types.Unsigned_8 (Altitude and 16#FF#);
 
    begin
-      Buffer (0) := 16#24#;
-      Buffer (1) := 16#27#;
-      Buffer (2) := H;
-      Buffer (3) := L;
-      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
-   end Build_Set_Sensor_Altitude_Command;
+      Buffer (0) := H;
+      Buffer (1) := L;
+      Buffer (2) := Sensirion_CRC (Buffer (0 .. 1));
+   end Build_Set_Sensor_Altitude_Input;
 
-   ------------------------------------------
-   -- Build_Set_Temperature_Offset_Command --
-   ------------------------------------------
+   ----------------------------------------
+   -- Build_Set_Temperature_Offset_Input --
+   ----------------------------------------
 
-   procedure Build_Set_Temperature_Offset_Command
-     (Buffer   : out Set_Temperature_Offset_Command;
+   procedure Build_Set_Temperature_Offset_Input
+     (Buffer   : out Set_Temperature_Offset_Input;
       Altitude : A0B.Types.Unsigned_16)
    is
       H     : constant A0B.Types.Unsigned_8 :=
@@ -110,34 +73,10 @@ package body A0B.SCD40 is
         A0B.Types.Unsigned_8 (Altitude and 16#FF#);
 
    begin
-      Buffer (0) := 16#24#;
-      Buffer (1) := 16#1D#;
-      Buffer (2) := H;
-      Buffer (3) := L;
-      Buffer (4) := Sensirion_CRC (Buffer (2 .. 3));
-   end Build_Set_Temperature_Offset_Command;
-
-   ------------------------------------
-   -- Build_Read_Measurement_Command --
-   ------------------------------------
-
-   procedure Build_Read_Measurement_Command
-     (Buffer : out Read_Measurement_Command) is
-   begin
-      Buffer (0) := 16#EC#;
-      Buffer (1) := 16#05#;
-   end Build_Read_Measurement_Command;
-
-   --------------------------------------------
-   -- Build_Start_Periodic_Measument_Command --
-   --------------------------------------------
-
-   procedure Build_Start_Periodic_Measument_Command
-     (Buffer : out Start_Periodic_Measument_Command) is
-   begin
-      Buffer (0) := 16#21#;
-      Buffer (1) := 16#b1#;
-   end Build_Start_Periodic_Measument_Command;
+      Buffer (0) := H;
+      Buffer (1) := L;
+      Buffer (2) := Sensirion_CRC (Buffer (0 .. 1));
+   end Build_Set_Temperature_Offset_Input;
 
    -----------------------------------------
    -- Parse_Get_Data_Ready_Status_Command --
