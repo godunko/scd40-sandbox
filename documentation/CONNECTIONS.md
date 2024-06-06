@@ -26,7 +26,7 @@
 | LPTM5_OUT | A3  | --> | BL   |
 | SPI6_MISO | G12 | <-- | MISO |      | DOUT   |
 | SPI6_MOSI | A7  | --> | MOSI |      | DIN    |
-| PA12      |     | <-- | PEN  |      | PENIRQ |
+| PA12      | A12 | <-- | PEN  |      | PENIRQ |
 | SPI6_SCK  | G13 | --> | CLK  |      | DCLK   |
 | SPI6_NSS  | A0  | --> | T_CS |      | CS     |
 
