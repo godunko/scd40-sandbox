@@ -4,6 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+--  with A0B.STM32H723.GPIO;
 with A0B.SVD.STM32H723.GPIO; use A0B.SVD.STM32H723.GPIO;
 with A0B.SVD.STM32H723.RCC;  use A0B.SVD.STM32H723.RCC;
 with A0B.SVD.STM32H723.SPI;  use A0B.SVD.STM32H723.SPI;
@@ -61,6 +62,14 @@ package body SCD40_Sandbox.Touch is
       Configure_H (GPIOG_Periph, 13, 5);
       --  PA0  -> SPI6_NSS
       Configure_L (GPIOC_Periph, 0, 5);
+
+      --  PENIRQ/A12
+
+      --  GPIOA_Periph.OSPEEDR.Arr (12) := 2#00#;      --  Low high speed
+      --  GPIOA_Periph.OTYPER.OT.Arr (Line) := False;    --  Output push-pull
+      --  GPIOA_Periph.AFRH.Arr (Line) := Alternative;   --  Alternate function
+      GPIOA_Periph.MODER.Arr (12) := 2#00#;        --  Input mode
+      GPIOA_Periph.PUPDR.Arr (12) := 2#01#;        --  Pullup
    end Configure_GPIO;
 
    -------------------
@@ -128,8 +137,6 @@ package body SCD40_Sandbox.Touch is
          IOLOCK   => False,  --  AF configuration is not locked
          others   => <>);
    end Configure_SPI;
-
-   --  TIN : array (1 .. 2) of A0B.Types.Unsigned_16;
 
    ---------------
    -- Get_Touch --
@@ -203,5 +210,14 @@ package body SCD40_Sandbox.Touch is
 
       Get_Touch;
    end Initialize;
+
+   ----------------
+   -- Is_Touched --
+   ----------------
+
+   function Is_Touched return Boolean is
+   begin
+      return not GPIOA_Periph.IDR.ID.Arr (12);
+   end Is_Touched;
 
 end SCD40_Sandbox.Touch;

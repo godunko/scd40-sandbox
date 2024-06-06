@@ -23,6 +23,8 @@ with SCD40_Sandbox.Painter;
 with SCD40_Sandbox.Touch;
 with SCD40_Sandbox.Widgets;
 
+--  with LADO.Acquisition;
+
 package body SCD40_Sandbox.Display is
 
    procedure Configure_FMC;
@@ -427,6 +429,10 @@ package body SCD40_Sandbox.Display is
    ------------------
 
    procedure Redraw_Touch is
+      --  use type A0B.Types.Unsigned_16;
+      --  use type A0B.Types.Unsigned_32;
+      --  use type A0B.Types.Integer_32;
+
    begin
       Painter.Set_Color (Background_Color);
       Painter.Fill_Rect (0, 0, 800, 50);
@@ -436,6 +442,9 @@ package body SCD40_Sandbox.Display is
       Painter.Set_Color (P_RGB);
 
       declare
+         use type A0B.Types.Unsigned_12;
+         use type A0B.Types.Integer_32;
+
          X  : constant Wide_String :=
            A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.X);
          Y  : constant Wide_String :=
@@ -444,13 +453,62 @@ package body SCD40_Sandbox.Display is
            A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.Z1);
          Z2 : constant Wide_String :=
            A0B.Types.Unsigned_12'Wide_Image (SCD40_Sandbox.Touch.VAL.Z2);
+         --  PV : constant A0B.Types.Unsigned_12 :=
+         --    SCD40_Sandbox.Touch.VAL.Z2
+         --      / A0B.Types.Unsigned_12'Max (SCD40_Sandbox.Touch.VAL.Z1, 1);
+         --  P  : constant Wide_String :=
+         --    A0B.Types.Unsigned_12'Wide_Image (PV);
+         DZ : constant Wide_String :=
+           A0B.Types.Unsigned_12'Wide_Image
+             (SCD40_Sandbox.Touch.VAL.Z2 - SCD40_Sandbox.Touch.VAL.Z1);
 
       begin
          Painter.Draw_Text (50, 43, X);
-         Painter.Draw_Text (250, 43, Y);
+         Painter.Draw_Text (150, 43, Y);
          Painter.Draw_Text (550, 43, Z1);
          Painter.Draw_Text (650, 43, Z2);
+
+         if SCD40_Sandbox.Touch.Is_Touched then
+            declare
+               PZ2 : constant A0B.Types.Integer_32 :=
+                 ((A0B.Types.Integer_32 (SCD40_Sandbox.Touch.VAL.Z2) + 1) * 1);
+               --  (A0B.Types.Integer_32 (SCD40_Sandbox.Touch.VAL.Z2) * 256);
+               PZ1 : constant A0B.Types.Integer_32 :=
+                 A0B.Types.Integer_32 (SCD40_Sandbox.Touch.VAL.Z1) + 1;
+               --  A0B.Types.Integer_32'Max
+               --    (1, A0B.Types.Integer_32 (SCD40_Sandbox.Touch.VAL.Z1));
+               DZ1 : constant A0B.Types.Integer_32 := PZ2 / PZ1 - 1 * 1;
+               PV  : constant A0B.Types.Integer_32 :=
+                 DZ1 * A0B.Types.Integer_32 (SCD40_Sandbox.Touch.VAL.X) / 1;
+               P  : constant Wide_String :=
+                 A0B.Types.Integer_32'Wide_Image (PV);
+
+            begin
+               Painter.Draw_Text (250, 43, P);
+               Painter.Draw_Text (450, 43, DZ);
+            end;
+         end if;
       end;
+
+      --  Painter.Set_Color (16#FFC0#);
+      --
+      --  for J in A0B.Types.Unsigned_32 (0) .. 799 loop
+      --     Painter.Fill_Rect
+      --       (A0B.Types.Integer_32 (J),
+      --        150
+      --          + (if (LADO.Acquisition.Buffer (J) and 2#0001#) /= 0
+      --               then 0 else 20),
+      --        1,
+      --        1);
+      --     Painter.Fill_Rect
+      --       (A0B.Types.Integer_32 (J),
+      --        200
+      --          + (if (LADO.Acquisition.Buffer (J) and 2#0010#) /= 0
+      --               then 0 else 20),
+      --        1,
+      --        1);
+      --     --  if (LAO.Acquisition.Buffer (J) and 2#0001#) /= 0 then
+      --  end loop;
    end Redraw_Touch;
 
 end SCD40_Sandbox.Display;
