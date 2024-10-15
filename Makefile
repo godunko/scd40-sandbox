@@ -1,6 +1,9 @@
 
 all: build-fk723m1
 
+clean:
+	rm -rf .objs bin alire config
+
 build-fk723m1:
 	alr build
 	eval `alr printenv`; arm-eabi-objcopy -O binary bin/scd40_sandbox.elf bin/scd40_sandbox.bin
