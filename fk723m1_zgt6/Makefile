@@ -1,17 +1,17 @@
 
-all: build-fk723m1
+all: build
 
 clean:
 	rm -rf .objs ../bin alire config
 
-build-fk723m1:
+build:
 	alr build
-	alr exec -- arm-eabi-objcopy -O binary ../bin/scd40_sandbox.elf ../bin/scd40_sandbox.bin
-	# eval `alr printenv`; arm-eabi-objdump -h -S ../bin/scd40_sandbox.elf
+	alr exec -- arm-eabi-objcopy -O binary ../bin/fk723m1_zgt6.elf ../bin/fk723m1_zgt6.bin
+	# eval `alr printenv`; arm-eabi-objdump -h -S ../bin/fk723m1_zgt6.elf
 	ls -l ../bin
 
-ocd-fk723m1:
+ocd:
 	openocd -f interface/cmsis-dap.cfg -f target/stm32h7x.cfg
 
-gdb-fk723m1:
-	eval `alr printenv`; arm-eabi-gdb --command="gdbinit" ../bin/scd40_sandbox.elf
+gdb:
+	eval `alr printenv`; arm-eabi-gdb --command="gdbinit" ../bin/fk723m1_zgt6.elf

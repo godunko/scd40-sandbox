@@ -8,7 +8,7 @@ with "../fk723m1_zgt6/config/sdc40_sandbox_config.gpr";
 
 with "light_fk723m1_zgt6.gpr";
 
-project SDC40_Sandbox is
+project FK723M1_ZGT6 is
 
    for Target use Light_FK723M1_ZGT6'Target;
    for Runtime use Light_FK723M1_ZGT6'Runtime;
@@ -22,7 +22,7 @@ project SDC40_Sandbox is
    for Main use ("scd40_sandbox-main.adb");
 
    package Builder is
-      for Executable ("scd40_sandbox-main.adb") use "scd40_sandbox.elf";
+      for Executable ("scd40_sandbox-main.adb") use "fk723m1_zgt6.elf";
    end Builder;
 
    package Compiler is
@@ -46,4 +46,4 @@ project SDC40_Sandbox is
          & ("-Wl,--gc-sections");
    end Linker;
 
-end SDC40_Sandbox;
+end FK723M1_ZGT6;
