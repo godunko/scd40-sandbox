@@ -16,6 +16,7 @@ project BlackPill_STM32F401 is
    for Source_Dirs use
      ("../source",
       "../source/gnat",
+      "../source/tasking",
       "../source/blackpill_stm32f401");
    for Object_Dir use "../.objs/" & SDC40_Sandbox_BlackPill_STM32F401_Config.Build_Profile;
    for Exec_Dir use "../bin";
