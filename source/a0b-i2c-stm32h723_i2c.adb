@@ -43,7 +43,7 @@ is
          --  Set device address and addressing mode to do its only once.
 
          declare
-            Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
+            Val : A0B.STM32H723.SVD.I2C.CR2_Register := Self.Peripheral.CR2;
 
          begin
             if Target_Address <= 16#7F# then
@@ -94,7 +94,7 @@ is
       --  Configure control register 1
 
       declare
-         Val : A0B.SVD.STM32H723.I2C.CR1_Register := Self.Peripheral.CR1;
+         Val : A0B.STM32H723.SVD.I2C.CR1_Register := Self.Peripheral.CR1;
 
       begin
          Val.PECEN     := False;
@@ -127,7 +127,7 @@ is
       --  Configure timing register (Fast Mode)
 
       declare
-         Val : A0B.SVD.STM32H723.I2C.TIMINGR_Register :=
+         Val : A0B.STM32H723.SVD.I2C.TIMINGR_Register :=
            Self.Peripheral.TIMINGR;
 
       begin
@@ -256,7 +256,7 @@ is
       loop
          exit when
            Self.Buffers (Self.Active).Size
-             /= Self.Buffers (Self.Active).Bytes;
+             /= Self.Buffers (Self.Active).Transferred;
 
          Self.Buffers (Self.Active).State := Success;
 
@@ -271,8 +271,8 @@ is
       begin
          Self.Peripheral.TXDR.TXDATA := Data;
 
-         Self.Address                     := @ + 1;
-         Self.Buffers (Self.Active).Bytes := @ + 1;
+         Self.Address                           := @ + 1;
+         Self.Buffers (Self.Active).Transferred := @ + 1;
       end;
    end Load_Into_TX;
 
@@ -290,9 +290,9 @@ is
    ------------------------
 
    procedure On_Event_Interrupt (Self : in out Master_Controller'Class) is
-      Status  : constant A0B.SVD.STM32H723.I2C.ISR_Register :=
+      Status  : constant A0B.STM32H723.SVD.I2C.ISR_Register :=
         Self.Peripheral.ISR;
-      Mask    : constant A0B.SVD.STM32H723.I2C.CR1_Register :=
+      Mask    : constant A0B.STM32H723.SVD.I2C.CR1_Register :=
         Self.Peripheral.CR1;
 
    begin
@@ -387,8 +387,9 @@ is
       for Buffer of Buffers loop
          Size := @ + Buffer.Size;
 
-         Buffer.Bytes := 0;
-         Buffer.State := Active;
+         Buffer.Transferred  := 0;
+         Buffer.State        := Active;
+         Buffer.Acknowledged := False;
       end loop;
 
       Self.Buffers := Buffers'Unrestricted_Access;
@@ -406,7 +407,7 @@ is
       --  Set transfer parameters and send (Re)START condition.
 
       declare
-         Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
+         Val : A0B.STM32H723.SVD.I2C.CR2_Register := Self.Peripheral.CR2;
 
       begin
          Val.RD_WRN  := True;           --  Master requests a read transfer.
@@ -519,7 +520,7 @@ is
       loop
          exit when
            Self.Buffers (Self.Active).Size
-             /= Self.Buffers (Self.Active).Bytes;
+             /= Self.Buffers (Self.Active).Transferred;
 
          Self.Active  := @ + 1;
          Self.Address := Self.Buffers (Self.Active).Address;
@@ -532,8 +533,8 @@ is
       begin
          Data := Self.Peripheral.RXDR.RXDATA;
 
-         Self.Address                     := @ + 1;
-         Self.Buffers (Self.Active).Bytes := @ + 1;
+         Self.Address                           := @ + 1;
+         Self.Buffers (Self.Active).Transferred := @ + 1;
       end;
    end Store_From_RX;
 
@@ -562,8 +563,9 @@ is
       for Buffer of Buffers loop
          Size := @ + Buffer.Size;
 
-         Buffer.Bytes := 0;
-         Buffer.State := Active;
+         Buffer.Transferred  := 0;
+         Buffer.State        := Active;
+         Buffer.Acknowledged := False;
       end loop;
 
       Self.Buffers := Buffers'Unrestricted_Access;
@@ -592,7 +594,7 @@ is
       --  Set transfer parameters and send (Re)START condition.
 
       declare
-         Val : A0B.SVD.STM32H723.I2C.CR2_Register := Self.Peripheral.CR2;
+         Val : A0B.STM32H723.SVD.I2C.CR2_Register := Self.Peripheral.CR2;
 
       begin
          Val.RD_WRN  := False;  --  Master requests a write transfer.

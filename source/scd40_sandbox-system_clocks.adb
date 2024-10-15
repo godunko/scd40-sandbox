@@ -4,7 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with A0B.SVD.STM32H723.RCC; use A0B.SVD.STM32H723.RCC;
+with A0B.STM32H723.SVD.RCC; use A0B.STM32H723.SVD.RCC;
 
 package body SCD40_Sandbox.System_Clocks is
 
