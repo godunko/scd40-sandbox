@@ -11,7 +11,9 @@ tags = ["embedded"]
 project-files = ["gnat/sdc40_sandbox.gpr"]
 
 [configuration]
-#disabled = true
+generate_ada = false
+generate_c = false
+generate_gpr = true
 
 [[depends-on]]
 a0b_armv7m_systick_clock_timer = "*"
