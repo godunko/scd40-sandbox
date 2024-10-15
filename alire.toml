@@ -15,9 +15,10 @@ project-files = ["gnat/sdc40_sandbox.gpr"]
 
 [[depends-on]]
 a0b_armv7m_systick_clock_timer = "*"
-a0b_callbacks = "*"
-a0b_svd_stm32h723 = "*"
-#a0b_time = "*"
+a0b_base = "*"
+a0b_i2c = "*"
+a0b_scd40 = "*"
+a0b_stm32h723 = "*"
+a0b_time = "*"
 a0b_timer = "*"
 light_fk723m1_zgt6 = "~0.2.0"
-#a0b_base = "*"
