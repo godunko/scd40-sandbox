@@ -1,0 +1,49 @@
+--
+--  Copyright (C) 2024, Vadim Godunko <vgodunko@gmail.com>
+--
+--  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+--
+
+with "../blackpill_stm32f401/config/sdc40_sandbox_blackpill_stm32f401_config.gpr";
+
+with "light_blackpill_stm32f401.gpr";
+
+project BlackPill_STM32F401 is
+
+   for Target use Light_BlackPill_STM32F401'Target;
+   for Runtime use Light_BlackPill_STM32F401'Runtime;
+
+   for Source_Dirs use
+     ("../source",
+      "../source/gnat",
+      "../source/blackpill_stm32f401");
+   for Object_Dir use "../.objs/" & SDC40_Sandbox_BlackPill_STM32F401_Config.Build_Profile;
+   for Exec_Dir use "../bin";
+   for Main use ("scd40_sandbox-driver.adb");
+
+   package Builder is
+      for Executable ("scd40_sandbox-driver.adb") use "blackpill_stm32f401.elf";
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches
+        & ("-O2", "-gnaty-B");
+
+      for Switches ("s-wchcnv.adb") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
+      for Switches ("s-wchcon.adb") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
+      for Switches ("s-wchjis.adb") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
+      for Switches ("s-wchstw.adb") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
+   end Compiler;
+
+   package Linker is
+      for Switches ("Ada") use
+        Light_BlackPill_STM32F401.Linker_Switches
+         & ("-Wl,--gc-sections");
+   end Linker;
+
+end BlackPill_STM32F401;

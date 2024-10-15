@@ -1,0 +1,10 @@
+set pagination off
+
+target extended-remote localhost:3333
+
+monitor reset halt
+
+break __gnat_last_chance_handler
+commands
+  backtrace
+end

@@ -1,0 +1,37 @@
+name = "sdc40_sandbox_blackpill_stm32f401"
+description = "SDC40 Sandbox for BlackPill STM32F401"
+version = "0.1.0-dev"
+
+authors = ["Vadim Godunko"]
+maintainers = ["Vadim Godunko <vgodunko@gmail.com>"]
+maintainers-logins = ["godunko"]
+licenses = "Apache-2.0 WITH LLVM-exception"
+tags = ["embedded"]
+
+project-files = ["../gnat/blackpill_stm32f401.gpr"]
+
+[configuration]
+generate_ada = false
+generate_c = false
+generate_gpr = true
+
+[[depends-on]]
+a0b_armv7m_systick_clock_timer = "*"
+a0b_base = "*"
+a0b_i2c = "*"
+a0b_scd40 = "*"
+a0b_time = "*"
+a0b_timer = "*"
+light_blackpill_stm32f401 = "~0.2.0"
+
+[[pins]]
+#a0b_armv7m = { path='../../a0b-armv7m' }
+#a0b_armv7m_systick_clock_timer = { path='../../a0b-armv7m-systick_clock_timer' }
+#a0b_base = { path='../../a0b-base' }
+#a0b_callbacks = { path='../../a0b-callbacks' }
+#a0b_i2c = { path='../../a0b-i2c' }
+a0b_scd40 = { path='../../a0b-scd40' }
+#a0b_stm32h723 = { path='../../a0b-stm32h723' }
+#a0b_time = { path='../../a0b-time' }
+#a0b_timer = { path='../../a0b-timer' }
+light_blackpill_stm32f401 = { path='../../light-startup/blackpill_stm32f401' }
