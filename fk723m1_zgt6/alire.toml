@@ -24,3 +24,15 @@ a0b_stm32h723 = "*"
 a0b_time = "*"
 a0b_timer = "*"
 light_fk723m1_zgt6 = "~0.2.0"
+
+[[pins]]
+a0b_armv7m = { path='../../a0b-armv7m' }
+a0b_armv7m_systick_clock_timer = { path='../../a0b-armv7m-systick_clock_timer' }
+a0b_base = { path='../../a0b-base' }
+a0b_callbacks = { path='../../a0b-callbacks' }
+a0b_i2c = { path='../../a0b-i2c' }
+a0b_scd40 = { path='../../a0b-scd40' }
+a0b_stm32h723 = { path='../../a0b-stm32h723' }
+a0b_time = { path='../../a0b-time' }
+a0b_timer = { path='../../a0b-timer' }
+light_fk723m1_zgt6 = { path='../../light-startup/fk723m1_zgt6' }
