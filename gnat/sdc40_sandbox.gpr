@@ -6,14 +6,14 @@
 
 with "../config/sdc40_sandbox_config.gpr";
 
-with "fk723m1_zgt6_startup.gpr";
+with "light_fk723m1_zgt6.gpr";
 
 project SDC40_Sandbox is
 
-   for Target use FK723M1_ZGT6_Startup'Target;
-   for Runtime use FK723M1_ZGT6_Startup'Runtime;
+   for Target use Light_FK723M1_ZGT6'Target;
+   for Runtime use Light_FK723M1_ZGT6'Runtime;
 
-   for Source_Dirs use ("../source", "../source/gnat");
+   for Source_Dirs use ("../source", "../source/gnat", "../../lado/source/");
    for Object_Dir use "../.objs/" & SDC40_Sandbox_Config.Build_Profile;
    for Exec_Dir use "../bin";
    for Main use ("scd40_sandbox-main.adb");
@@ -39,7 +39,7 @@ project SDC40_Sandbox is
 
    package Linker is
       for Switches ("Ada") use
-        FK723M1_ZGT6_Startup.Linker_Switches
+        Light_FK723M1_ZGT6.Linker_Switches
          & ("-Wl,--gc-sections");
    end Linker;
 
