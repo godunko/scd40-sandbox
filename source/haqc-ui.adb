@@ -8,8 +8,9 @@ with A0B.Awaits;
 with A0B.I2C.SCD40;
 with A0B.SCD40;
 with A0B.STM32F401.USART;
-with A0B.Time;
+with A0B.Time.Clock;
 with A0B.Tasking;
+with A0B.Types;
 
 with HAQC.Configuration.Board;
 with HAQC.Configuration.Sensors;
@@ -26,6 +27,8 @@ package body HAQC.UI is
 
    function Get_Serial_Number return A0B.SCD40.Serial_Number;
 
+   procedure Start_Periodic_Measurement;
+
    package Console is
 
       procedure Put (Item : Character);
@@ -37,6 +40,12 @@ package body HAQC.UI is
       procedure New_Line;
 
    end Console;
+
+   procedure Delay_For (T : A0B.Time.Time_Span);
+
+   CO2 : A0B.Types.Unsigned_16 := 0 with Volatile;
+   T   : A0B.Types.Unsigned_16 := 0 with Volatile;
+   RH  : A0B.Types.Unsigned_16 := 0 with Volatile;
 
    -------------
    -- Console --
@@ -101,6 +110,48 @@ package body HAQC.UI is
 
    end Console;
 
+   ---------------
+   -- Delay_For --
+   ---------------
+
+   procedure Delay_For (T : A0B.Time.Time_Span) is
+      use type A0B.Time.Time_Span;
+
+   begin
+      A0B.Tasking.Delay_Until (A0B.Time.Clock + T);
+   end Delay_For;
+
+   ---------------------------
+   -- Get_Data_Ready_Status --
+   ---------------------------
+
+   function Get_Data_Ready_Status return Boolean is
+      Response : A0B.SCD40.Get_Data_Ready_Status_Response;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await    : aliased A0B.Awaits.Await;
+      Success  : Boolean := True;
+      Ready    : Boolean;
+
+   begin
+      SCD40_Sensor.Read
+        (A0B.SCD40.Get_Data_Ready_Status,
+         Response,
+         A0B.Time.Milliseconds (1),
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      A0B.SCD40.Parse_Get_Data_Ready_Status_Response
+        (Response, Ready, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      return Ready;
+   end Get_Data_Ready_Status;
+
    -----------------------
    -- Get_Serial_Number --
    -----------------------
@@ -128,8 +179,44 @@ package body HAQC.UI is
          raise Program_Error;
       end if;
 
+      Delay_For (A0B.Time.Milliseconds (1));
+
       return Serial;
    end Get_Serial_Number;
+
+   ----------------------
+   -- Read_Measurement --
+   ----------------------
+
+   procedure Read_Measurement is
+      Response : A0B.SCD40.Read_Measurement_Response;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await    : aliased A0B.Awaits.Await;
+      Success  : Boolean := True;
+
+   begin
+      SCD40_Sensor.Read
+        (A0B.SCD40.Read_Measurement,
+         Response,
+         A0B.Time.Milliseconds (1),
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      A0B.SCD40.Parse_Read_Measurement_Response
+        (Response,
+         CO2,
+         T,
+         RH,
+         Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Delay_For (A0B.Time.Milliseconds (1));
+   end Read_Measurement;
 
    -------------------
    -- Register_Task --
@@ -139,6 +226,30 @@ package body HAQC.UI is
    begin
       A0B.Tasking.Register_Thread (TCB, Task_Subprogram'Access, 16#400#);
    end Register_Task;
+
+   --------------------------------
+   -- Start_Periodic_Measurement --
+   --------------------------------
+
+   procedure Start_Periodic_Measurement is
+      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await   : aliased A0B.Awaits.Await;
+      Success : Boolean := True;
+
+   begin
+      SCD40_Sensor.Send_Command
+        (A0B.SCD40.Start_Periodic_Measurement,
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Delay_For (A0B.Time.Milliseconds (1));
+   end Start_Periodic_Measurement;
 
    ---------------------
    -- Task_Subprogram --
@@ -153,8 +264,22 @@ package body HAQC.UI is
       Console.Put_Line
         ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Get_Serial_Number));
 
+      Start_Periodic_Measurement;
+
       loop
-         null;
+         Delay_For (A0B.Time.Seconds (1));
+
+         if Get_Data_Ready_Status then
+            Read_Measurement;
+
+            Console.Put_Line
+              ("T "
+               & A0B.Types.Unsigned_16'Image (T)
+               & "  RH "
+               & A0B.Types.Unsigned_16'Image (RH)
+               & "  CO2 "
+               & A0B.Types.Unsigned_16'Image (CO2));
+         end if;
       end loop;
    end Task_Subprogram;
 
