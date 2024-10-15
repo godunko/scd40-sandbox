@@ -4,7 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with "../config/sdc40_sandbox_config.gpr";
+with "../fk723m1_zgt6/config/sdc40_sandbox_config.gpr";
 
 with "light_fk723m1_zgt6.gpr";
 

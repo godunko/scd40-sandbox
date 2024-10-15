@@ -8,7 +8,7 @@ maintainers-logins = ["godunko"]
 licenses = "Apache-2.0 WITH LLVM-exception"
 tags = ["embedded"]
 
-project-files = ["gnat/sdc40_sandbox.gpr"]
+project-files = ["../gnat/sdc40_sandbox.gpr"]
 
 [configuration]
 generate_ada = false
