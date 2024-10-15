@@ -16,6 +16,7 @@ project FK723M1_ZGT6 is
    for Source_Dirs use
      ("../source",
       "../source/gnat",
+      "../source/non-tasking",
       "../source/fk723m1_zgt6");
    for Object_Dir use "../.objs/" & SDC40_Sandbox_Config.Build_Profile;
    for Exec_Dir use "../bin";
