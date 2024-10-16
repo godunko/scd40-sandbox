@@ -204,8 +204,6 @@ package body SCD40_Sandbox.SCD40 is
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
    end Set_Ambient_Pressure;
 
    -------------------------
@@ -227,8 +225,6 @@ package body SCD40_Sandbox.SCD40 is
          Status,
          SCD40_Sandbox.Await.Create_Callback (Await),
          Success);
-      SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
-
       SCD40_Sandbox.Await.Suspend_Till_Callback (Await);
    end Set_Sensor_Altitude;
 
