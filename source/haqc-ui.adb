@@ -25,13 +25,29 @@ package body HAQC.UI is
 
    procedure Task_Subprogram;
 
-   function Get_Serial_Number return A0B.SCD40.Serial_Number;
+   procedure Get_Serial_Number
+     (Serial  : out A0B.SCD40.Serial_Number;
+      Success : in out Boolean);
+   --  Reading out the serial number can be used to identify the chip and to
+   --  verify the presence of the sensor. The get_serial_number command returns
+   --  3 words, and every word is followed by an 8-bit CRC checksum. Together,
+   --  the 3 words constitute a unique serial number with a length of 48 bits
+   --  (big endian format).
 
    procedure Start_Periodic_Measurement;
+   --  Start periodic measurement mode. The signal update interval is 5
+   --  seconds.
+
+   procedure Stop_Periodic_Measurement (Success : in out Boolean);
+   --  Stop periodic measurement mode to change the sensor configuration or to
+   --  save power.
+   --
+   --  Note that the sensor will only respond to other commands 500 ms after
+   --  the stop_periodic_measurement command has been issued.
 
    package Console is
 
-      procedure Put (Item : Character);
+      --  procedure Put (Item : Character);
 
       procedure Put (Item : String);
 
@@ -66,13 +82,13 @@ package body HAQC.UI is
       -- Put --
       ---------
 
-      procedure Put (Item : Character) is
-         Buffer : String (1 .. 1);
-
-      begin
-         Buffer (Buffer'First) := Item;
-         Put (Buffer);
-      end Put;
+      --  procedure Put (Item : Character) is
+      --     Buffer : String (1 .. 1);
+      --
+      --  begin
+      --     Buffer (Buffer'First) := Item;
+      --     Put (Buffer);
+      --  end Put;
 
       ---------
       -- Put --
@@ -156,14 +172,21 @@ package body HAQC.UI is
    -- Get_Serial_Number --
    -----------------------
 
-   function Get_Serial_Number return A0B.SCD40.Serial_Number is
+   procedure Get_Serial_Number
+     (Serial  : out A0B.SCD40.Serial_Number;
+      Success : in out Boolean)
+   is
       Response : A0B.SCD40.Get_Serial_Number_Response;
       Status   : aliased A0B.I2C.SCD40.Transaction_Status;
       Await    : aliased A0B.Awaits.Await;
-      Success  : Boolean := True;
-      Serial   : A0B.SCD40.Serial_Number;
 
    begin
+      if not Success then
+         Serial := 0;
+
+         return;
+      end if;
+
       SCD40_Sensor.Read
         (A0B.SCD40.Get_Serial_Number,
          Response,
@@ -175,13 +198,11 @@ package body HAQC.UI is
 
       A0B.SCD40.Parse_Get_Serial_Number_Response (Response, Serial, Success);
 
-      if not Success then
-         raise Program_Error;
-      end if;
+      --  if not Success then
+      --     raise Program_Error;
+      --  end if;
 
-      Delay_For (A0B.Time.Milliseconds (1));
-
-      return Serial;
+      --  Delay_For (A0B.Time.Milliseconds (1));
    end Get_Serial_Number;
 
    ----------------------
@@ -227,6 +248,62 @@ package body HAQC.UI is
       A0B.Tasking.Register_Thread (TCB, Task_Subprogram'Access, 16#400#);
    end Register_Task;
 
+   --------------------------
+   -- Set_Ambient_Pressure --
+   --------------------------
+
+   --  procedure Set_Ambient_Pressure (To : A0B.Types.Unsigned_32) is
+   --     Input   : A0B.SCD40.Set_Ambient_Pressure_Input;
+   --     Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+   --     Await   : aliased A0B.Awaits.Await;
+   --     Success : Boolean := True;
+   --
+   --  begin
+   --     A0B.SCD40.Build_Set_Ambient_Pressure_Input (Input, To);
+   --
+   --     SCD40_Sensor.Write
+   --       (A0B.SCD40.Set_Ambient_Pressure,
+   --        Input,
+   --        Status,
+   --        A0B.Awaits.Create_Callback (Await),
+   --        Success);
+   --     A0B.Awaits.Suspend_Until_Callback (Await, Success);
+   --
+   --     if not Success then
+   --        raise Program_Error;
+   --     end if;
+   --
+   --     Delay_For (A0B.Time.Milliseconds (1));
+   --  end Set_Ambient_Pressure;
+
+   -------------------------
+   -- Set_Sensor_Altitude --
+   -------------------------
+
+   procedure Set_Sensor_Altitude (To : A0B.Types.Unsigned_16) is
+      Input   : A0B.SCD40.Set_Sensor_Altitude_Input;
+      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await   : aliased A0B.Awaits.Await;
+      Success : Boolean := True;
+
+   begin
+      A0B.SCD40.Build_Set_Sensor_Altitude_Input (Input, To);
+
+      SCD40_Sensor.Write
+        (A0B.SCD40.Set_Sensor_Altitude,
+         Input,
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Delay_For (A0B.Time.Milliseconds (1));
+   end Set_Sensor_Altitude;
+
    --------------------------------
    -- Start_Periodic_Measurement --
    --------------------------------
@@ -251,18 +328,67 @@ package body HAQC.UI is
       Delay_For (A0B.Time.Milliseconds (1));
    end Start_Periodic_Measurement;
 
+   -------------------------------
+   -- Stop_Periodic_Measurement --
+   -------------------------------
+
+   procedure Stop_Periodic_Measurement (Success : in out Boolean) is
+      Status : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await  : aliased A0B.Awaits.Await;
+
+   begin
+      if not Success then
+         return;
+      end if;
+
+      SCD40_Sensor.Send_Command
+        (A0B.SCD40.Stop_Periodic_Measurement,
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      Delay_For (A0B.Time.Milliseconds (500));
+   end Stop_Periodic_Measurement;
+
    ---------------------
    -- Task_Subprogram --
    ---------------------
 
    procedure Task_Subprogram is
+      Serial  : A0B.SCD40.Serial_Number;
+      Success : Boolean := True;
+
    begin
       Console.New_Line;
       Console.Put_Line ("Home Air Quality Controller");
       Console.New_Line;
 
+      loop
+         --  Get sensor's serial number.
+
+         Success := True;
+         Get_Serial_Number (Serial, Success);
+
+         exit when Success;
+
+         --  Operation fails when sensor is in the periodic measurement mode,
+         --  stop periodic measurement to be able to configure sensor.
+
+         Success := True;
+         Stop_Periodic_Measurement (Success);
+
+         if not Success then
+            raise Program_Error;
+         end if;
+      end loop;
+
       Console.Put_Line
-        ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Get_Serial_Number));
+        ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Serial));
+
+      --  Configure sensor.
+
+      Set_Sensor_Altitude (428);
 
       Start_Periodic_Measurement;
 
