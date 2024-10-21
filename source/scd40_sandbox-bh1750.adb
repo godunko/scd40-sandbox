@@ -6,6 +6,7 @@
 
 with A0B.I2C.Device_Drivers;
 with A0B.I2C.STM32H723_I2C.I2C4;
+with A0B.Types.Arrays;
 
 with SCD40_Sandbox.Await;
 
@@ -24,7 +25,7 @@ package body SCD40_Sandbox.BH1750 is
 
       use type A0B.Types.Unsigned_16;
 
-      Response : A0B.I2C.Unsigned_8_Array (0 .. 1);
+      Response : A0B.Types.Arrays.Unsigned_8_Array (0 .. 1);
       Success  : Boolean := True;
       Status   : aliased A0B.I2C.Device_Drivers.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
@@ -47,7 +48,7 @@ package body SCD40_Sandbox.BH1750 is
    ----------------
 
    procedure Initialize is
-      Command : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Command : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
       Success : Boolean := True;
       Status  : aliased A0B.I2C.Device_Drivers.Transaction_Status;
       Await   : aliased SCD40_Sandbox.Await.Await;

@@ -7,7 +7,7 @@
 --  This is no tasking version of the package. It assumes that there is only
 --  single "thread", so use of single global object is fine.
 
-with A0B.ARMv7M.CMSIS;
+with A0B.ARMv7M.Instructions;
 with A0B.Callbacks.Generic_Parameterless;
 with A0B.Timer;
 
@@ -33,7 +33,7 @@ package body A0B.Delays is
         (Delay_Timeout, On_Delay_Callbacks.Create_Callback, Interval);
 
       while not Delay_Done loop
-         A0B.ARMv7M.CMSIS.Wait_For_Interrupt;
+         A0B.ARMv7M.Instructions.Wait_For_Interrupt;
       end loop;
    end Delay_For;
 

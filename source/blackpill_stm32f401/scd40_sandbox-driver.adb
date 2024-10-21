@@ -6,7 +6,7 @@
 
 pragma Ada_2022;
 
-with A0B.ARMv7M.SysTick;
+with A0B.ARMv7M.SysTick_Clock_Timer;
 --  with A0B.Delays;
 --  with A0B.I2C.STM32H723_I2C.I2C4;
 --  with A0B.STM32H723.SVD.GPIO; use A0B.STM32H723.SVD.GPIO;
@@ -28,7 +28,7 @@ with HAQC.UI;
 
 procedure SCD40_Sandbox.Driver is
 begin
-   A0B.ARMv7M.SysTick.Initialize
+   A0B.ARMv7M.SysTick_Clock_Timer.Initialize
      (Use_Processor_Clock => True,
       Clock_Frequency     => 84_000_000);
    A0B.Tasking.Initialize (16#400#);

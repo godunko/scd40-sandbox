@@ -9,7 +9,7 @@ pragma Ada_2022;
 with Interfaces;
 with System.Storage_Elements;
 
-with A0B.ARMv7M.Memory_Protection_Unit;
+with A0B.ARMv7M.SCS.MPU;
 with A0B.Delays;
 with A0B.STM32H723.SVD.FMC;  use A0B.STM32H723.SVD.FMC;
 with A0B.STM32H723.SVD.GPIO; use A0B.STM32H723.SVD.GPIO;
@@ -322,12 +322,11 @@ package body SCD40_Sandbox.Display is
 
    procedure Configure_MPU is
    begin
-      A0B.ARMv7M.Memory_Protection_Unit.MPU.MPU_RNR :=
-        (REGION => 1, others => <>);
+      A0B.ARMv7M.SCS.MPU.MPU_RNR := (REGION => 1, others => <>);
 
-      A0B.ARMv7M.Memory_Protection_Unit.MPU.MPU_RBAR :=
+      A0B.ARMv7M.SCS.MPU.MPU_RBAR :=
         (ADDR => System.Storage_Elements.To_Address (16#6000_0000#));
-      A0B.ARMv7M.Memory_Protection_Unit.MPU.MPU_RASR :=
+      A0B.ARMv7M.SCS.MPU.MPU_RASR :=
         (ENABLE => True,    --  Region is enabled
          SIZE   => 5,       --  64 bytes
          SRD    => 2#0000_0000#,

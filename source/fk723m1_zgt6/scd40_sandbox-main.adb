@@ -6,7 +6,7 @@
 
 pragma Ada_2022;
 
-with A0B.ARMv7M.SysTick;
+with A0B.ARMv7M.SysTick_Clock_Timer;
 with A0B.Delays;
 with A0B.I2C.STM32H723_I2C.I2C4;
 with A0B.STM32H723.SVD.GPIO; use A0B.STM32H723.SVD.GPIO;
@@ -27,7 +27,7 @@ with SCD40_Sandbox.Touch;
 
 procedure SCD40_Sandbox.Main is
 begin
-   A0B.ARMv7M.SysTick.Initialize (True, 520_000_000);
+   A0B.ARMv7M.SysTick_Clock_Timer.Initialize (True, 520_000_000);
    SCD40_Sandbox.System_Clocks.Initialize;
 
    --  LADO.Acquisition.Initialize;

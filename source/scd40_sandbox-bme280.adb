@@ -10,6 +10,7 @@ with A0B.Delays;
 with A0B.I2C.Device_Drivers_8;
 with A0B.I2C.STM32H723_I2C.I2C4;
 with A0B.Time;
+with A0B.Types.Arrays;
 with A0B.Types.GCC_Builtins;
 
 with SCD40_Sandbox.Await;
@@ -119,16 +120,18 @@ is
 
    procedure Get_Calibration_Data;
 
-   subtype CALIB00_CALIB25_Response is A0B.I2C.Unsigned_8_Array (0 .. 25);
+   subtype CALIB00_CALIB25_Response is
+     A0B.Types.Arrays.Unsigned_8_Array (0 .. 25);
 
-   subtype CALIB26_CALIB41_Response is A0B.I2C.Unsigned_8_Array (0 .. 15);
+   subtype CALIB26_CALIB41_Response is
+     A0B.Types.Arrays.Unsigned_8_Array (0 .. 15);
 
    procedure Parse_Calibration_Data
      (T    : CALIB00_CALIB25_Response;
       H    : CALIB26_CALIB41_Response;
       Data : out Calibration_Data);
 
-   subtype Measure_Data_Response is A0B.I2C.Unsigned_8_Array (0 .. 7);
+   subtype Measure_Data_Response is A0B.Types.Arrays.Unsigned_8_Array (0 .. 7);
 
    procedure Parse_Measure_Data
      (Response : Measure_Data_Response;
@@ -173,7 +176,7 @@ is
 
       --  Ctrl_Hum        : Ctrl_Hum_Register :=
       --    (osrs_h => To_Oversamplig (Humidity_Oversampling), others => <>);
-      Buffer  : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Buffer  : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
       Success : Boolean := True;
       Status  : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await   : aliased SCD40_Sandbox.Await.Await;
@@ -302,7 +305,7 @@ is
    -----------------
 
    function Get_Chip_Id return A0B.Types.Unsigned_8 is
-      Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Response : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
       Success  : Boolean := True;
       Status   : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await    : aliased SCD40_Sandbox.Await.Await;
@@ -495,7 +498,7 @@ is
    ----------------
 
    function Get_Status return Status_Register is
-      Response : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Response : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
       Result   : Status_Register with Import, Address => Response (0)'Address;
       Success  : Boolean := True;
       Status   : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
@@ -645,7 +648,7 @@ is
    ----------------
 
    procedure Soft_Reset is
-      Buffer  : A0B.I2C.Unsigned_8_Array (0 .. 0);
+      Buffer  : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
       Success : Boolean := True;
       Status  : aliased A0B.I2C.Device_Drivers_8.Transaction_Status;
       Await   : aliased SCD40_Sandbox.Await.Await;

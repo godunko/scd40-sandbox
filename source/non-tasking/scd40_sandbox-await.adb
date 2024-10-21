@@ -4,7 +4,7 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-with A0B.ARMv7M.CMSIS;
+with A0B.ARMv7M.Instructions;
 with A0B.Callbacks.Generic_Subprogram;
 
 package body SCD40_Sandbox.Await is
@@ -44,7 +44,7 @@ package body SCD40_Sandbox.Await is
    procedure Suspend_Till_Callback (Self : Await) is
    begin
       while Self.Busy loop
-         A0B.ARMv7M.CMSIS.Wait_For_Interrupt;
+         A0B.ARMv7M.Instructions.Wait_For_Interrupt;
       end loop;
    end Suspend_Till_Callback;
 
