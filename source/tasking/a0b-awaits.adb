@@ -20,8 +20,9 @@ package body A0B.Awaits is
    function Create_Callback
      (Self : aliased in out Await) return A0B.Callbacks.Callback is
    begin
-      pragma Assert
-        (not Ada.Synchronous_Task_Control.Current_State (Self.Barrier));
+      --  pragma Assert
+      --    (not Ada.Synchronous_Task_Control.Current_State (Self.Barrier));
+      Ada.Synchronous_Task_Control.Set_False (Self.Barrier);
 
       return Callbacks.Create_Callback (Self);
    end Create_Callback;
