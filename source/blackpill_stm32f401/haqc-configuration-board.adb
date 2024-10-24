@@ -4,23 +4,9 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  with A0B.Delays;
---  with A0B.I2C.SCD40;
---  with A0B.I2C.STM32H723_I2C.I2C4;
---  with A
---  with A0B.STM32F401.I2C;
---  with A0B.SCD40;
---  with A0B.Time;
---
---  with SCD40_Sandbox.Await;
---  with SCD40_Sandbox.Globals;
-
 with A0B.STM32F401.USART.Configuration_Utilities;
 
 package body HAQC.Configuration.Board is
-
-   --  IMU_INT_Pin : A0B.STM32F401.GPIO.GPIO_Line
-   --    renames A0B.STM32F401.GPIO.PIOB.PB15;
 
    ----------------
    -- Initialize --
@@ -37,6 +23,21 @@ package body HAQC.Configuration.Board is
       UART1.USART1_Asynchronous.Configure (UART_Configuration);
 
       I2C1.I2C1.Configure;
+
+      SPI.Configure;
+
+      LCD_RESET_Pin.Configure_Output
+        (Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.No);
+      LCD_DC_Pin.Configure_Output
+        (Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.No);
+      LCD_LED_Pin.Configure_Output
+        (Mode  => A0B.STM32F401.GPIO.Push_Pull,
+         Speed => A0B.STM32F401.GPIO.Very_High,
+         Pull  => A0B.STM32F401.GPIO.No);
    end Initialize;
 
 end HAQC.Configuration.Board;

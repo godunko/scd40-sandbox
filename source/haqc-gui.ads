@@ -4,10 +4,10 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
-package HAQC.UI is
+package HAQC.GUI is
 
    --  pragma Preelaborate;
 
    procedure Register_Task;
 
-end HAQC.UI;
+end HAQC.GUI;

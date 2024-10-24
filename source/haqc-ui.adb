@@ -4,6 +4,8 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+pragma Ada_2022;
+
 with A0B.Awaits;
 with A0B.I2C.SCD40;
 with A0B.SCD40;
@@ -45,9 +47,20 @@ package body HAQC.UI is
    --  Note that the sensor will only respond to other commands 500 ms after
    --  the stop_periodic_measurement command has been issued.
 
+   procedure Reinit;
+   --  The reinit command reinitializes the sensor by reloading user
+   --  settings from EEPROM. Before sending the reinit command, the
+   --  stop_periodic_measurement command must be issued. If the reinit command
+   --  does not trigger the desired re- initialization, a power-cycle should be
+   --  applied to the SCD4x.
+
+   procedure Perform_Factory_Reset;
+   --  The perform_factory_reset command resets all configuration settings
+   --  stored in the EEPROM and erases the FRC and ASC algorithm history.
+
    package Console is
 
-      --  procedure Put (Item : Character);
+      procedure Put (Item : Character);
 
       procedure Put (Item : String);
 
@@ -82,13 +95,13 @@ package body HAQC.UI is
       -- Put --
       ---------
 
-      --  procedure Put (Item : Character) is
-      --     Buffer : String (1 .. 1);
-      --
-      --  begin
-      --     Buffer (Buffer'First) := Item;
-      --     Put (Buffer);
-      --  end Put;
+      procedure Put (Item : Character) is
+         Buffer : String (1 .. 1);
+
+      begin
+         Buffer (Buffer'First) := Item;
+         Put (Buffer);
+      end Put;
 
       ---------
       -- Put --
@@ -205,6 +218,30 @@ package body HAQC.UI is
       --  Delay_For (A0B.Time.Milliseconds (1));
    end Get_Serial_Number;
 
+   ---------------------------
+   -- Perform_Factory_Reset --
+   ---------------------------
+
+   procedure Perform_Factory_Reset is
+      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await   : aliased A0B.Awaits.Await;
+      Success : Boolean := True;
+
+   begin
+      SCD40_Sensor.Send_Command
+        (A0B.SCD40.Perform_Factory_Reset,
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Delay_For (A0B.Time.Milliseconds (1_200));
+   end Perform_Factory_Reset;
+
    ----------------------
    -- Read_Measurement --
    ----------------------
@@ -247,6 +284,30 @@ package body HAQC.UI is
    begin
       A0B.Tasking.Register_Thread (TCB, Task_Subprogram'Access, 16#400#);
    end Register_Task;
+
+   ------------
+   -- Reinit --
+   ------------
+
+   procedure Reinit is
+      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+      Await   : aliased A0B.Awaits.Await;
+      Success : Boolean := True;
+
+   begin
+      SCD40_Sensor.Send_Command
+        (A0B.SCD40.Reinit,
+         Status,
+         A0B.Awaits.Create_Callback (Await),
+         Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Delay_For (A0B.Time.Milliseconds (30));
+   end Reinit;
 
    --------------------------
    -- Set_Ambient_Pressure --
@@ -358,6 +419,8 @@ package body HAQC.UI is
    procedure Task_Subprogram is
       Serial  : A0B.SCD40.Serial_Number;
       Success : Boolean := True;
+      Miss    : Natural := 0;
+      Init    : Natural := 0;
 
    begin
       Console.New_Line;
@@ -396,6 +459,8 @@ package body HAQC.UI is
          Delay_For (A0B.Time.Seconds (1));
 
          if Get_Data_Ready_Status then
+            Miss := 0;
+
             Read_Measurement;
 
             Console.Put_Line
@@ -405,6 +470,58 @@ package body HAQC.UI is
                & A0B.Types.Unsigned_16'Image (RH)
                & "  CO2 "
                & A0B.Types.Unsigned_16'Image (CO2));
+
+         else
+            Miss := @ + 1;
+            Console.Put ('.');
+         end if;
+
+         if Miss > 10 then
+            --  Too many misses, attempt to restart sensor.
+
+            Init := @ + 1;
+
+            if Init < 5 then
+               Miss := 0;
+               Console.Put_Line (" ... reinit ...");
+
+               --  Stop periodic measurement to be able to configure sensor.
+
+               Success := True;
+               Stop_Periodic_Measurement (Success);
+
+               if not Success then
+                  raise Program_Error;
+               end if;
+
+               --  Reinit sensor
+
+               Reinit;
+
+            else
+               Miss := 0;
+               Init := 0;
+               Console.Put_Line (" ... factory reset ...");
+
+               --  Stop periodic measurement to be able to configure sensor.
+
+               Success := True;
+               Stop_Periodic_Measurement (Success);
+
+               if not Success then
+                  raise Program_Error;
+               end if;
+
+               --  DO factory reset of the sensor.
+
+               Perform_Factory_Reset;
+            end if;
+
+            --  Configure sensor.
+
+            Set_Sensor_Altitude (428);
+
+            Start_Periodic_Measurement;
          end if;
       end loop;
    end Task_Subprogram;
