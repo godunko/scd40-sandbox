@@ -19,6 +19,13 @@ with GFX.Rasteriser;
 
 package GFX.Framebuffers is
 
+   type Pixel is private;
+
+   function From_RGB
+     (R : Interfaces.Unsigned_8;
+      G : Interfaces.Unsigned_8;
+      B : Interfaces.Unsigned_8) return Pixel;
+
    type Framebuffer (Capacity : GFX.GX_Unsigned) is limited private;
    --  @component Capacity  Number of pixel to be reserved minus one.
 
@@ -37,6 +44,18 @@ package GFX.Framebuffers is
      (Self    : Framebuffer;
       Address : out System.Address;
       Size    : out GFX.GX_Unsigned);
+
+   procedure Set
+     (Self  : in out Framebuffer;
+      X     : GFX.Rasteriser.Device_Pixel_Index;
+      Y     : GFX.Rasteriser.Device_Pixel_Index;
+      Value : Pixel);
+
+   function Width
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+
+   function Height
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
 
 private
 

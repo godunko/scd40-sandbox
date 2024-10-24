@@ -18,9 +18,11 @@ with A0B.Tasking;
 with A0B.Types.Arrays;
 
 with GFX.Framebuffers;
+with GFX.Rasteriser.Bitmap_Fonts;
 
 with HAQC.Configuration.Board;
 --  with HAQC.Configuration.Sensors;
+with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 
 package body HAQC.GUI is
 
@@ -238,8 +240,9 @@ package body HAQC.GUI is
 
    --  use type A0B.Types.Unsigned_32;
 
-   Await          : aliased A0B.Awaits.Await;
-   Command_Buffer : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
+   Await            : aliased A0B.Awaits.Await;
+   Command_Buffer   : A0B.Types.Arrays.Unsigned_8_Array (0 .. 0);
+   Parameter_Buffer : A0B.Types.Arrays.Unsigned_8_Array (0 .. 3);
    --  Data_Buffer    : A0B.Types.Arrays.Unsigned_8_Array (0 .. 7) :=
    --    [others => 0];
    --  Color_Buffer   : A0B.Types.Arrays.Unsigned_8_Array (0 .. 2) :=
@@ -248,6 +251,17 @@ package body HAQC.GUI is
    Buffers        : A0B.SPI.Buffer_Descriptor_Array (0 .. 0);
 
    procedure Send_Command (Command : A0B.Types.Unsigned_8);
+
+   procedure Send_Command
+     (Command   : A0B.Types.Unsigned_8;
+      Parameter : A0B.Types.Unsigned_8);
+
+   procedure Send_Command
+     (Command     : A0B.Types.Unsigned_8;
+      Parameter_1 : A0B.Types.Unsigned_8;
+      Parameter_2 : A0B.Types.Unsigned_8;
+      Parameter_3 : A0B.Types.Unsigned_8;
+      Parameter_4 : A0B.Types.Unsigned_8);
 
    Cyc_Initiate : A0B.Types.Unsigned_32 with Export;
    Cyc_Transfer : A0B.Types.Unsigned_32 with Export;
@@ -303,6 +317,192 @@ package body HAQC.GUI is
       HAQC.Configuration.Board.SPI.Release_Device;
    end Send_Command;
 
+   ------------------
+   -- Send_Command --
+   ------------------
+
+   procedure Send_Command
+     (Command   : A0B.Types.Unsigned_8;
+      Parameter : A0B.Types.Unsigned_8)
+   is
+      Success : Boolean := True;
+
+   begin
+      Command_Buffer (0) := Command;
+
+      Buffers (0) :=
+        (Address => Command_Buffer'Address,
+         Size    => Command_Buffer'Length,
+         others  => <>);
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (False);
+
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Parameter_Buffer (0) := Parameter;
+
+      Buffers (0) :=
+        (Address => Parameter_Buffer'Address,
+         Size    => 1,
+         others  => <>);
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (True);
+
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      HAQC.Configuration.Board.SPI.Release_Device;
+   end Send_Command;
+
+   ------------------
+   -- Send_Command --
+   ------------------
+
+   procedure Send_Command
+     (Command     : A0B.Types.Unsigned_8;
+      Parameter_1 : A0B.Types.Unsigned_8;
+      Parameter_2 : A0B.Types.Unsigned_8;
+      Parameter_3 : A0B.Types.Unsigned_8;
+      Parameter_4 : A0B.Types.Unsigned_8)
+   is
+      Success : Boolean := True;
+
+   begin
+      Command_Buffer (0) := Command;
+
+      Buffers (0) :=
+        (Address => Command_Buffer'Address,
+         Size    => Command_Buffer'Length,
+         others  => <>);
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (False);
+
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      Parameter_Buffer (0) := Parameter_1;
+      Parameter_Buffer (1) := Parameter_2;
+      Parameter_Buffer (2) := Parameter_3;
+      Parameter_Buffer (3) := Parameter_4;
+
+      Buffers (0) :=
+        (Address => Parameter_Buffer'Address,
+         Size    => 4,
+         others  => <>);
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (True);
+
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      HAQC.Configuration.Board.SPI.Release_Device;
+   end Send_Command;
+
+   ----------------------
+   -- Send_Framebuffer --
+   ----------------------
+
+   procedure Send_Framebuffer
+     (Framebuffer : GFX.Framebuffers.Framebuffer;
+      X           : GFX.Rasteriser.Device_Pixel_Index;
+      Y           : GFX.Rasteriser.Device_Pixel_Index)
+   is
+      use type A0B.Types.Unsigned_16;
+      use type GFX.GX_Integer;
+
+      SC : constant A0B.Types.Unsigned_16 :=
+        A0B.Types.Unsigned_16 (X);
+      EC : constant A0B.Types.Unsigned_16 :=
+        A0B.Types.Unsigned_16 (X + GFX.Framebuffers.Width (Framebuffer) - 1);
+      SP : constant A0B.Types.Unsigned_16 :=
+        A0B.Types.Unsigned_16 (Y);
+      EP : constant A0B.Types.Unsigned_16 :=
+        A0B.Types.Unsigned_16 (Y + GFX.Framebuffers.Height (Framebuffer) - 1);
+
+      Success : Boolean := True;
+
+   begin
+      Send_Command
+        (A0B.ILI9488.CASET,
+         A0B.Types.Unsigned_8 (SC / 256),
+         A0B.Types.Unsigned_8 (SC mod 256),
+         A0B.Types.Unsigned_8 (EC / 256),
+         A0B.Types.Unsigned_8 (EC mod 256));
+      Send_Command
+        (A0B.ILI9488.PASET,
+         A0B.Types.Unsigned_8 (SP / 256),
+         A0B.Types.Unsigned_8 (SP mod 256),
+         A0B.Types.Unsigned_8 (EP / 256),
+         A0B.Types.Unsigned_8 (EP mod 256));
+
+      --  Send data
+
+      Command_Buffer (0) := A0B.ILI9488.RAMWR;
+
+      Buffers (0) :=
+        (Address => Command_Buffer'Address,
+         Size    => Command_Buffer'Length,
+         others  => <>);
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (False);
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      GFX.Framebuffers.Buffer
+        (Self    => Framebuffer,
+         Address => Buffers (0).Address,
+         Size    => GFX.GX_Unsigned (Buffers (0).Size));
+
+      HAQC.Configuration.Board.LCD_DC_Pin.Set (True);
+      HAQC.Configuration.Board.SPI.Transmit
+        (Transmit_Buffers => Buffers,
+         On_Finished      => A0B.Awaits.Create_Callback (Await),
+         Success          => Success);
+      A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      HAQC.Configuration.Board.SPI.Release_Device;
+   end Send_Framebuffer;
+
    ---------------------
    -- Task_Subprogram --
    ---------------------
@@ -327,7 +527,8 @@ package body HAQC.GUI is
 
       A0B.ARMv7M.Profiling_Utilities.Initialize;
 
-      --  for J in 0 .. A0B.Types.Unsigned_32 (Colors_Buffer'Length / 3) - 1 loop
+      --  for J in 0 ..
+      --  A0B.Types.Unsigned_32 (Colors_Buffer'Length / 3) - 1 loop
       --     Colors_Buffer (J * 3 .. J * 3 + 2) :=
       --       [16#F0#, 16#00#, 16#00#];
       --  end loop;
@@ -344,6 +545,15 @@ package body HAQC.GUI is
 
       Send_Command (A0B.ILI9488.DISON);
       delay until Ada.Real_Time.Clock + Ada.Real_Time.Milliseconds (120);
+
+      Send_Command (A0B.ILI9488.COLMOD, 2#0110_0110#);  --  18bit
+      Send_Command (A0B.ILI9488.MADCTL, 2#1110_0000#);
+      --  D7: MY  - Row Address Order
+      --  D6: MX  - Column Address Order
+      --  D5: MV  - Row/Column Exchange
+      --  D4: ML  - Vertical Refresh Order
+      --  D3: BGR - RGB-BGR Order
+      --  D2: MH  - Horizontal Refresh ORDER
 
    --     raise Program_Error;
    --     --     Console.New_Line;
@@ -391,64 +601,93 @@ package body HAQC.GUI is
    --        HAQC.Configuration.Board.SPI.Release_Device;
    --     end;
 
+      Send_Command (A0B.ILI9488.CASET, 16#00#, 16#00#, 16#01#, 16#DF#);
+      Send_Command (A0B.ILI9488.PASET, 16#00#, 16#00#, 16#01#, 16#3F#);
+
       From := A0B.ARMv7M.Profiling_Utilities.Get;
 
-      declare
-         Success : Boolean := True;
+      --  declare
+      --     Success : Boolean := True;
+      --
+      --  begin
+      --     Command_Buffer (0) := A0B.ILI9488.RAMWR;
+      --
+      --     Buffers (0) :=
+      --       (Address => Command_Buffer'Address,
+      --        Size    => Command_Buffer'Length,
+      --        others  => <>);
+      --
+      --     HAQC.Configuration.Board.LCD_DC_Pin.Set (False);
+      --     HAQC.Configuration.Board.SPI.Transmit
+      --       (Transmit_Buffers => Buffers,
+      --        On_Finished      => A0B.Awaits.Create_Callback (Await),
+      --        Success          => Success);
+      --     A0B.Awaits.Suspend_Until_Callback (Await, Success);
+      --
+      --     if not Success then
+      --        raise Program_Error;
+      --     end if;
+      --
+      --     GFX.Framebuffers.Buffer
+      --       (Self    => FB1,
+      --        Address => Buffers (0).Address,
+      --        Size    => GFX.GX_Unsigned (Buffers (0).Size));
+      --
+      --     for J in 1 .. 320 loop
+      --     --  for J in 1 .. 480 * 320 / (Colors_Buffer'Length / 3) loop
+      --        --  Buffers (0) :=
+      --        --    (Address => Color_Buffer'Address,
+      --        --     Size    => Color_Buffer'Length,
+      --        --     others  => <>);
+      --        --  Buffers (0) :=
+      --        --    (Address => Colors_Buffer'Address,
+      --        --     Size    => Colors_Buffer'Length,
+      --        --     others  => <>);
+      --
+      --        HAQC.Configuration.Board.LCD_DC_Pin.Set (True);
+      --        HAQC.Configuration.Board.SPI.Transmit
+      --          (Transmit_Buffers => Buffers,
+      --           On_Finished      => A0B.Awaits.Create_Callback (Await),
+      --           Success          => Success);
+      --        A0B.Awaits.Suspend_Until_Callback (Await, Success);
+      --
+      --        if not Success then
+      --           raise Program_Error;
+      --        end if;
+      --     end loop;
+      --
+      --     HAQC.Configuration.Board.SPI.Release_Device;
+      --  end;
 
-      begin
-         --  Command_Buffer (0) := RDDIDIF;
-         Command_Buffer (0) := A0B.ILI9488.RAMWR;
-
-         Buffers (0) :=
-           (Address => Command_Buffer'Address,
-            Size    => Command_Buffer'Length,
-            others  => <>);
-
-         HAQC.Configuration.Board.LCD_DC_Pin.Set (False);
-         HAQC.Configuration.Board.SPI.Transmit
-           (Transmit_Buffers => Buffers,
-            On_Finished      => A0B.Awaits.Create_Callback (Await),
-            Success          => Success);
-         A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-         if not Success then
-            raise Program_Error;
-         end if;
-
-         GFX.Framebuffers.Buffer
-           (Self    => FB1,
-            Address => Buffers (0).Address,
-            Size    => GFX.GX_Unsigned (Buffers (0).Size));
-
-         for J in 1 .. 320 loop
-         --  for J in 1 .. 480 * 320 / (Colors_Buffer'Length / 3) loop
-            --  Buffers (0) :=
-            --    (Address => Color_Buffer'Address,
-            --     Size    => Color_Buffer'Length,
-            --     others  => <>);
-            --  Buffers (0) :=
-            --    (Address => Colors_Buffer'Address,
-            --     Size    => Colors_Buffer'Length,
-            --     others  => <>);
-
-            HAQC.Configuration.Board.LCD_DC_Pin.Set (True);
-            HAQC.Configuration.Board.SPI.Transmit
-              (Transmit_Buffers => Buffers,
-               On_Finished      => A0B.Awaits.Create_Callback (Await),
-               Success          => Success);
-            A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-            if not Success then
-               raise Program_Error;
-            end if;
-         end loop;
-
-         HAQC.Configuration.Board.SPI.Release_Device;
-      end;
+      for Y in 0 .. GFX.Rasteriser.Device_Pixel_Count (320 - 1) loop
+         Send_Framebuffer
+           (Framebuffer => FB1,
+            X           => 0,
+            Y           => Y);
+      end loop;
 
       To := A0B.ARMv7M.Profiling_Utilities.Get;
       Cyc_Fill := A0B.ARMv7M.Profiling_Utilities.Cycles (From, To);
+
+      GFX.Framebuffers.Configure (FB2, 20, 20);
+
+      for J in 0 .. GFX.Rasteriser.Device_Pixel_Count (10) loop
+         GFX.Framebuffers.Set
+           (FB2, J, J, GFX.Framebuffers.From_RGB (0, 255, 0));
+      end loop;
+
+      Send_Framebuffer
+        (Framebuffer => FB2,
+         X           => 100,
+         Y           => 100);
+
+      GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+        (Framebuffer => FB2,
+         Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+         Color       => GFX.Framebuffers.From_RGB (0, 255, 0),
+         X           => 100,
+         Y           => 100,
+         Text        => "Hello, SCD40!");
 
       loop
          null;

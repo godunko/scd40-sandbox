@@ -53,4 +53,53 @@ package body GFX.Framebuffers is
       Self.Height := GFX.GX_Unsigned (Height);
    end Configure;
 
+   --------------
+   -- From_RGB --
+   --------------
+
+   function From_RGB
+     (R : Interfaces.Unsigned_8;
+      G : Interfaces.Unsigned_8;
+      B : Interfaces.Unsigned_8) return Pixel is
+   begin
+      return
+        Pixel
+          (GX_Unsigned (R) * 2 ** 16
+           or GX_Unsigned (G) * 2 ** 8
+           or GX_Unsigned (B));
+   end From_RGB;
+
+   ------------
+   -- Height --
+   ------------
+
+   function Height
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   begin
+      return GFX.Rasteriser.Device_Pixel_Index (Self.Height);
+   end Height;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Self  : in out Framebuffer;
+      X     : GFX.Rasteriser.Device_Pixel_Index;
+      Y     : GFX.Rasteriser.Device_Pixel_Index;
+      Value : Pixel) is
+   begin
+      Self.Data (GX_Unsigned (Y) * Self.Width + GX_Unsigned (X)) := Value;
+   end Set;
+
+   -----------
+   -- Width --
+   -----------
+
+   function Width
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   begin
+      return GFX.Rasteriser.Device_Pixel_Index (Self.Width);
+   end Width;
+
 end GFX.Framebuffers;

@@ -21,7 +21,13 @@ is
    DISOFF  : constant := 16#28#;  --  Display OFF
    DISON   : constant := 16#29#;  --  Display ON
 
+   CASET   : constant := 16#2A#;  --  Column Address Set
+   PASET   : constant := 16#2B#;  --  Page Address Set
    RAMWR   : constant := 16#2C#;  --  Memory Write
+
+   MADCTL  : constant := 16#36#;  --  Memory Access Control
+
+   COLMOD  : constant := 16#3A#;  --  Interface Pixel Format
 
    RDID1   : constant := 16#DA#;  --  Read ID1
    RDID2   : constant := 16#DB#;  --  Read ID2
