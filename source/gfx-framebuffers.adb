@@ -38,6 +38,8 @@ package body GFX.Framebuffers is
 
    procedure Configure
      (Self   : in out Framebuffer;
+      X      : GFX.Rasteriser.Device_Pixel_Index;
+      Y      : GFX.Rasteriser.Device_Pixel_Index;
       Width  : GFX.Rasteriser.Device_Pixel_Count;
       Height : GFX.Rasteriser.Device_Pixel_Count)
    is
@@ -49,6 +51,8 @@ package body GFX.Framebuffers is
          raise Program_Error;
       end if;
 
+      Self.X      := X;
+      Self.Y      := Y;
       Self.Width  := GFX.GX_Unsigned (Width);
       Self.Height := GFX.GX_Unsigned (Height);
    end Configure;
@@ -74,9 +78,9 @@ package body GFX.Framebuffers is
    ------------
 
    function Height
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count is
    begin
-      return GFX.Rasteriser.Device_Pixel_Index (Self.Height);
+      return GFX.Rasteriser.Device_Pixel_Count (Self.Height);
    end Height;
 
    ---------
@@ -89,7 +93,13 @@ package body GFX.Framebuffers is
       Y     : GFX.Rasteriser.Device_Pixel_Index;
       Value : Pixel) is
    begin
-      Self.Data (GX_Unsigned (Y) * Self.Width + GX_Unsigned (X)) := Value;
+      if X in Self.X .. Self.X + GX_Integer (Self.Width) - 1
+        and Y in Self.Y .. Self.Y + GX_Integer (Self.Width) - 1
+      then
+         Self.Data
+           (GX_Unsigned (Y - Self.Y) * Self.Width
+              + GX_Unsigned (X - Self.X)) := Value;
+      end if;
    end Set;
 
    -----------
@@ -97,9 +107,27 @@ package body GFX.Framebuffers is
    -----------
 
    function Width
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count is
    begin
-      return GFX.Rasteriser.Device_Pixel_Index (Self.Width);
+      return GFX.Rasteriser.Device_Pixel_Count (Self.Width);
    end Width;
+
+   -------
+   -- X --
+   -------
+
+   function X (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   begin
+      return Self.X;
+   end X;
+
+   -------
+   -- Y --
+   -------
+
+   function Y (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   begin
+      return Self.Y;
+   end Y;
 
 end GFX.Framebuffers;

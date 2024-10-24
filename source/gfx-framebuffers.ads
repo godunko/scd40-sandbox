@@ -33,6 +33,8 @@ package GFX.Framebuffers is
 
    procedure Configure
      (Self   : in out Framebuffer;
+      X      : GFX.Rasteriser.Device_Pixel_Index;
+      Y      : GFX.Rasteriser.Device_Pixel_Index;
       Width  : GFX.Rasteriser.Device_Pixel_Count;
       Height : GFX.Rasteriser.Device_Pixel_Count)
      with Pre =>
@@ -51,11 +53,15 @@ package GFX.Framebuffers is
       Y     : GFX.Rasteriser.Device_Pixel_Index;
       Value : Pixel);
 
+   function X (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+
+   function Y (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+
    function Width
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count;
 
    function Height
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count;
 
 private
 
@@ -66,6 +72,8 @@ private
 
    type Framebuffer (Capacity : GFX.GX_Unsigned) is limited record
       Data   : Pixel_Array (0 .. Capacity);
+      X      : GFX.GX_Integer;
+      Y      : GFX.GX_Integer;
       Width  : GFX.GX_Unsigned;
       Height : GFX.GX_Unsigned;
    end record;

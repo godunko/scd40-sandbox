@@ -150,6 +150,15 @@ package body HAQC.UI is
       A0B.Tasking.Delay_Until (A0B.Time.Clock + T);
    end Delay_For;
 
+   -------------
+   -- Get_CO2 --
+   -------------
+
+   function Get_CO2 return Integer is
+   begin
+      return Integer (CO2);
+   end Get_CO2;
+
    ---------------------------
    -- Get_Data_Ready_Status --
    ---------------------------
