@@ -11,6 +11,15 @@ pragma Restrictions (No_Elaboration_Code);
 package body GFX.Generic_Pixel_Buffers_24 is
 
    ------------
+   -- Bottom --
+   ------------
+
+   function Bottom (Self : Pixel_Buffer) return GFX.GX_Integer is
+   begin
+      return Self.Clip.Bottom;
+   end Bottom;
+
+   ------------
    -- Buffer --
    ------------
 
@@ -20,7 +29,7 @@ package body GFX.Generic_Pixel_Buffers_24 is
       Size    : out GFX.GX_Unsigned) is
    begin
       Address := Self.Data'Address;
-      Size    := Self.Width * Self.Height * 3;
+      Size    := Self.Columns * Self.Rows * 3;
    end Buffer;
 
    -----------
@@ -29,43 +38,80 @@ package body GFX.Generic_Pixel_Buffers_24 is
 
    procedure Clear (Self : in out Pixel_Buffer) is
    begin
-      Self.Data (0 .. Self.Width * Self.Height - 1) := [others => 0];
+      Self.Data (0 .. Self.Columns * Self.Rows - 1) := [others => 0];
    end Clear;
+
+   -------------
+   -- Columns --
+   -------------
+
+   function Columns (Self : Pixel_Buffer) return GFX.GX_Unsigned is
+   begin
+      return Self.Columns;
+   end Columns;
 
    ---------------
    -- Configure --
    ---------------
 
    procedure Configure
-     (Self   : in out Pixel_Buffer;
-      X      : GFX.Rasteriser.Device_Pixel_Index;
-      Y      : GFX.Rasteriser.Device_Pixel_Index;
-      Width  : GFX.Rasteriser.Device_Pixel_Count;
-      Height : GFX.Rasteriser.Device_Pixel_Count)
+     (Self         : in out Pixel_Buffer;
+      Top_Left     : GFX.Points.GI_Point;
+      Bottom_Right : GFX.Points.GI_Point)
    is
-      Max_Height : constant GFX.GX_Unsigned :=
-        (Self.Capacity + 1) / GFX.GX_Unsigned (Width);
+      Columns : constant GFX.GX_Unsigned :=
+        GFX.GX_Unsigned
+          (GFX.GX_Integer'Max (0, Bottom_Right.X - Top_Left.X + 1));
+      Rows    : constant GFX.GX_Unsigned :=
+        GFX.GX_Unsigned
+          (GFX.GX_Integer'Max (0, Bottom_Right.Y - Top_Left.Y + 1));
 
    begin
-      if Max_Height = 0 or Max_Height < GFX.GX_Unsigned (Height) then
+      if Self.Capacity + 1 < Columns * Rows then
          raise Program_Error;
       end if;
 
-      Self.X      := X;
-      Self.Y      := Y;
-      Self.Width  := GFX.GX_Unsigned (Width);
-      Self.Height := GFX.GX_Unsigned (Height);
+      Self.Clip.Top  := Top_Left.Y;
+      Self.Clip.Left := Top_Left.X;
+      Self.Columns   := Columns;
+      Self.Rows      := Rows;
+
+      if Columns = 0 or else Rows = 0 then
+         Self.Clip.Right  := Top_Left.X - 1;
+         Self.Clip.Bottom := Top_Left.Y - 1;
+
+      else
+         Self.Clip.Right  := Bottom_Right.X;
+         Self.Clip.Bottom := Bottom_Right.Y;
+      end if;
    end Configure;
 
-   ------------
-   -- Height --
-   ------------
+   ----------
+   -- Left --
+   ----------
 
-   function Height
-     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count is
+   function Left (Self : Pixel_Buffer) return GFX.GX_Integer is
    begin
-      return GFX.Rasteriser.Device_Pixel_Count (Self.Height);
-   end Height;
+      return Self.Clip.Left;
+   end Left;
+
+   -----------
+   -- Right --
+   -----------
+
+   function Right (Self : Pixel_Buffer) return GFX.GX_Integer is
+   begin
+      return Self.Clip.Right;
+   end Right;
+
+   ----------
+   -- Rows --
+   ----------
+
+   function Rows (Self : Pixel_Buffer) return GFX.GX_Unsigned is
+   begin
+      return Self.Rows;
+   end Rows;
 
    ---------
    -- Set --
@@ -77,16 +123,16 @@ package body GFX.Generic_Pixel_Buffers_24 is
       Y    : GFX.Rasteriser.Device_Pixel_Index;
       To   : Pixel) is
    begin
-      if X in Self.X .. Self.X + GX_Integer (Self.Width) - 1
-        and Y in Self.Y .. Self.Y + GX_Integer (Self.Width) - 1
+      if X in Self.Clip.Left .. Self.Clip.Right
+        and Y in Self.Clip.Top .. Self.Clip.Bottom
       then
          declare
             Component : Pixel
               with Import,
                    Address =>
                      Self.Data
-                       (GX_Unsigned (Y - Self.Y) * Self.Width
-                          + GX_Unsigned (X - Self.X))'Address;
+                       (GX_Unsigned (Y - Self.Clip.Top) * Self.Columns
+                          + GX_Unsigned (X - Self.Clip.Left))'Address;
 
          begin
             Component := To;
@@ -94,32 +140,13 @@ package body GFX.Generic_Pixel_Buffers_24 is
       end if;
    end Set;
 
-   -----------
-   -- Width --
-   -----------
+   ---------
+   -- Top --
+   ---------
 
-   function Width
-     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count is
+   function Top (Self : Pixel_Buffer) return GFX.GX_Integer is
    begin
-      return GFX.Rasteriser.Device_Pixel_Count (Self.Width);
-   end Width;
-
-   -------
-   -- X --
-   -------
-
-   function X (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index is
-   begin
-      return Self.X;
-   end X;
-
-   -------
-   -- Y --
-   -------
-
-   function Y (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index is
-   begin
-      return Self.Y;
-   end Y;
+      return Self.Clip.Top;
+   end Top;
 
 end GFX.Generic_Pixel_Buffers_24;

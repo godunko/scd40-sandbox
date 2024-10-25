@@ -230,20 +230,15 @@ package body HAQC.GUI is
      (Framebuffer : GFX.Pixel_Buffers.Pixel_Buffer)
    is
       use type A0B.Types.Unsigned_16;
-      use type GFX.GX_Integer;
 
       SC : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.X (Framebuffer));
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Left (Framebuffer));
       EC : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16
-          (GFX.Pixel_Buffers.X (Framebuffer)
-             + GFX.Pixel_Buffers.Width (Framebuffer) - 1);
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Right (Framebuffer));
       SP : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Y (Framebuffer));
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Top (Framebuffer));
       EP : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16
-          (GFX.Pixel_Buffers.Y (Framebuffer)
-             + GFX.Pixel_Buffers.Height (Framebuffer) - 1);
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Bottom (Framebuffer));
 
       Success : Boolean := True;
 
@@ -314,8 +309,8 @@ package body HAQC.GUI is
       To    : A0B.ARMv7M.Profiling_Utilities.Stamp;
 
    begin
-      GFX.Pixel_Buffers.Configure (FB1, 0, 0, 480, 1);
-      GFX.Pixel_Buffers.Configure (FB2, 0, 0, 480, 1);
+      GFX.Pixel_Buffers.Configure (FB1, (0, 0), (479, 0));
+      GFX.Pixel_Buffers.Configure (FB2, (0, 0), (479, 0));
 
       GFX.Pixel_Buffers.Clear (FB1);
       GFX.Pixel_Buffers.Clear (FB2);
@@ -389,7 +384,7 @@ package body HAQC.GUI is
       From := A0B.ARMv7M.Profiling_Utilities.Get;
 
       for Y in 0 .. GFX.Rasteriser.Device_Pixel_Count (320 - 1) loop
-         GFX.Pixel_Buffers.Configure (FB1, 0, Y, 480, 1);
+         GFX.Pixel_Buffers.Configure (FB1, (0, Y), (479, Y));
          GFX.Pixel_Buffers.Clear (FB1);
          Send_Framebuffer (FB1);
       end loop;
@@ -399,7 +394,7 @@ package body HAQC.GUI is
 
       --  Draw gree line
 
-      GFX.Pixel_Buffers.Configure (FB2, 100, 100, 20, 20);
+      GFX.Pixel_Buffers.Configure (FB2, (100, 100), (119, 119));
 
       for J in 100 .. GFX.Rasteriser.Device_Pixel_Count (120) loop
          GFX.Pixel_Buffers.Set
@@ -410,7 +405,7 @@ package body HAQC.GUI is
 
       --  Draw text
 
-      GFX.Pixel_Buffers.Configure (FB2, 200, 170, 200, 45);
+      GFX.Pixel_Buffers.Configure (FB2, (200, 170), (399, 214));
       GFX.Pixel_Buffers.Clear (FB2);
       GFX.Rasteriser.Bitmap_Fonts.Draw_Text
         (Framebuffer => FB2,
@@ -430,7 +425,7 @@ package body HAQC.GUI is
               Integer'Wide_Image (HAQC.UI.Get_CO2);
 
          begin
-            GFX.Pixel_Buffers.Configure (FB2, 200, 170, 200, 45);
+            GFX.Pixel_Buffers.Configure (FB2, (200, 170), (399, 214));
             GFX.Pixel_Buffers.Clear (FB2);
             GFX.Rasteriser.Bitmap_Fonts.Draw_Text
               (Framebuffer => FB2,

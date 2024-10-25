@@ -10,6 +10,8 @@ pragma Restrictions (No_Elaboration_Code);
 
 with System;
 
+private with GFX.Clip_Rectangles;
+with GFX.Points;
 with GFX.Rasteriser;
 
 generic
@@ -25,15 +27,9 @@ is
    procedure Clear (Self : in out Pixel_Buffer);
 
    procedure Configure
-     (Self   : in out Pixel_Buffer;
-      X      : GFX.Rasteriser.Device_Pixel_Index;
-      Y      : GFX.Rasteriser.Device_Pixel_Index;
-      Width  : GFX.Rasteriser.Device_Pixel_Count;
-      Height : GFX.Rasteriser.Device_Pixel_Count)
-     with Pre =>
-       Width >= 1
-         and Height >= 1
-         and GX_Unsigned (Width) * GX_Unsigned (Height) <= Self.Capacity + 1;
+     (Self         : in out Pixel_Buffer;
+      Top_Left     : GFX.Points.GI_Point;
+      Bottom_Right : GFX.Points.GI_Point);
 
    procedure Buffer
      (Self    : Pixel_Buffer;
@@ -46,15 +42,17 @@ is
       Y    : GFX.Rasteriser.Device_Pixel_Index;
       To   : Pixel);
 
-   function X (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index;
+   function Top (Self : Pixel_Buffer) return GFX.GX_Integer;
 
-   function Y (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index;
+   function Left (Self : Pixel_Buffer) return GFX.GX_Integer;
 
-   function Width
-     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count;
+   function Right (Self : Pixel_Buffer) return GFX.GX_Integer;
 
-   function Height
-     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count;
+   function Bottom (Self : Pixel_Buffer) return GFX.GX_Integer;
+
+   function Columns (Self : Pixel_Buffer) return GFX.GX_Unsigned;
+
+   function Rows (Self : Pixel_Buffer) return GFX.GX_Unsigned;
 
 private
 
@@ -66,11 +64,10 @@ private
      with Component_Size => 24;
 
    type Pixel_Buffer (Capacity : GFX.GX_Unsigned) is limited record
-      Data   : Item_Array (0 .. Capacity);
-      X      : GFX.GX_Integer;
-      Y      : GFX.GX_Integer;
-      Width  : GFX.GX_Unsigned;
-      Height : GFX.GX_Unsigned;
+      Data    : Item_Array (0 .. Capacity);
+      Clip    : GFX.Clip_Rectangles.GI_Clip_Rectangle;
+      Columns : GFX.GX_Unsigned;
+      Rows    : GFX.GX_Unsigned;
    end record;
 
 end GFX.Generic_Pixel_Buffers_24;
