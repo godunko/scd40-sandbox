@@ -23,6 +23,7 @@ a0b_stm32f401_spi = "*"
 a0b_stm32f401_usart = "*"
 a0b_tasking = "*"
 gfx_rasteriser = "*"
+gfx_sandbox = "*"
 light_blackpill_stm32f401 = "~0.2.0"
 
 [[pins]]
@@ -44,7 +45,6 @@ a0b_stm32f401_usart = { path='../../a0b-stm32f401-usart' }
 a0b_tasking = { path='../../a0b-tasking' }
 a0b_time = { path='../../a0b-time' }
 a0b_timer = { path='../../a0b-timer' }
-light_blackpill_stm32f401 = { path='../../light-startup/blackpill_stm32f401' }
-
-[[pins]]
 gfx_rasteriser = { path='../../gfx-sandbox/subprojects/gfx-rasteriser' }
+gfx_sandbox = { path='../../gfx-sandbox' }
+light_blackpill_stm32f401 = { path='../../light-startup/blackpill_stm32f401' }
