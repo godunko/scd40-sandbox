@@ -62,10 +62,10 @@ package body GFX.Rasteriser.Bitmap_Fonts is
             for J in 0 .. 7 loop
                if (Aux and 2#1000_0000#) /= 0 then
                   GFX.Pixel_Buffers.Set
-                    (Self  => Framebuffer,
-                     X     => GFX.Rasteriser.Device_Pixel_Index (XC),
-                     Y     => GFX.Rasteriser.Device_Pixel_Index (YC),
-                     Value => Color);
+                    (Self => Framebuffer,
+                     X    => GFX.Rasteriser.Device_Pixel_Index (XC),
+                     Y    => GFX.Rasteriser.Device_Pixel_Index (YC),
+                     To   => Color);
                end if;
 
                Aux := A0B.Types.Shift_Left (@, 1);

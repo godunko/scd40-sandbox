@@ -41,10 +41,10 @@ is
       Size    : out GFX.GX_Unsigned);
 
    procedure Set
-     (Self  : in out Pixel_Buffer;
-      X     : GFX.Rasteriser.Device_Pixel_Index;
-      Y     : GFX.Rasteriser.Device_Pixel_Index;
-      Value : Pixel);
+     (Self : in out Pixel_Buffer;
+      X    : GFX.Rasteriser.Device_Pixel_Index;
+      Y    : GFX.Rasteriser.Device_Pixel_Index;
+      To   : Pixel);
 
    function X (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index;
 

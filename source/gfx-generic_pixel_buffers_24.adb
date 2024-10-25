@@ -72,16 +72,16 @@ package body GFX.Generic_Pixel_Buffers_24 is
    ---------
 
    procedure Set
-     (Self  : in out Pixel_Buffer;
-      X     : GFX.Rasteriser.Device_Pixel_Index;
-      Y     : GFX.Rasteriser.Device_Pixel_Index;
-      Value : Pixel) is
+     (Self : in out Pixel_Buffer;
+      X    : GFX.Rasteriser.Device_Pixel_Index;
+      Y    : GFX.Rasteriser.Device_Pixel_Index;
+      To   : Pixel) is
    begin
       if X in Self.X .. Self.X + GX_Integer (Self.Width) - 1
         and Y in Self.Y .. Self.Y + GX_Integer (Self.Width) - 1
       then
          declare
-            Item : Pixel
+            Component : Pixel
               with Import,
                    Address =>
                      Self.Data
@@ -89,7 +89,7 @@ package body GFX.Generic_Pixel_Buffers_24 is
                           + GX_Unsigned (X - Self.X))'Address;
 
          begin
-            Item := Value;
+            Component := To;
          end;
       end if;
    end Set;
