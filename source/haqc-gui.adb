@@ -15,7 +15,7 @@ with A0B.SPI;
 with A0B.Tasking;
 with A0B.Types.Arrays;
 
-with GFX.Framebuffers;
+with GFX.Pixel_Buffers;
 with GFX.Pixels.ILI9488_18;
 with GFX.Rasteriser.Bitmap_Fonts;
 
@@ -53,8 +53,9 @@ package body HAQC.GUI is
 
    use type GFX.GX_Unsigned;
 
-   FB1 : GFX.Framebuffers.Framebuffer (480 * 20 - 1);
-   FB2 : GFX.Framebuffers.Framebuffer (480 * 20 - 1);
+   FB1 : GFX.Pixel_Buffers.Pixel_Buffer (480 * 20 - 1);
+   FB2 : GFX.Pixel_Buffers.Pixel_Buffer (480 * 20 - 1);
+   --  FB2 : GFX.Pixel_Buffers.Pixel_Buffer (8_192 - 1);
 
    -------------------
    -- Register_Task --
@@ -226,23 +227,23 @@ package body HAQC.GUI is
    ----------------------
 
    procedure Send_Framebuffer
-     (Framebuffer : GFX.Framebuffers.Framebuffer)
+     (Framebuffer : GFX.Pixel_Buffers.Pixel_Buffer)
    is
       use type A0B.Types.Unsigned_16;
       use type GFX.GX_Integer;
 
       SC : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16 (GFX.Framebuffers.X (Framebuffer));
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.X (Framebuffer));
       EC : constant A0B.Types.Unsigned_16 :=
         A0B.Types.Unsigned_16
-          (GFX.Framebuffers.X (Framebuffer)
-             + GFX.Framebuffers.Width (Framebuffer) - 1);
+          (GFX.Pixel_Buffers.X (Framebuffer)
+             + GFX.Pixel_Buffers.Width (Framebuffer) - 1);
       SP : constant A0B.Types.Unsigned_16 :=
-        A0B.Types.Unsigned_16 (GFX.Framebuffers.Y (Framebuffer));
+        A0B.Types.Unsigned_16 (GFX.Pixel_Buffers.Y (Framebuffer));
       EP : constant A0B.Types.Unsigned_16 :=
         A0B.Types.Unsigned_16
-          (GFX.Framebuffers.Y (Framebuffer)
-             + GFX.Framebuffers.Height (Framebuffer) - 1);
+          (GFX.Pixel_Buffers.Y (Framebuffer)
+             + GFX.Pixel_Buffers.Height (Framebuffer) - 1);
 
       Success : Boolean := True;
 
@@ -280,7 +281,7 @@ package body HAQC.GUI is
          raise Program_Error;
       end if;
 
-      GFX.Framebuffers.Buffer
+      GFX.Pixel_Buffers.Buffer
         (Self    => Framebuffer,
          Address => Buffers (0).Address,
          Size    => GFX.GX_Unsigned (Buffers (0).Size));
@@ -313,11 +314,11 @@ package body HAQC.GUI is
       To    : A0B.ARMv7M.Profiling_Utilities.Stamp;
 
    begin
-      GFX.Framebuffers.Configure (FB1, 0, 0, 480, 1);
-      GFX.Framebuffers.Configure (FB2, 0, 0, 480, 1);
+      GFX.Pixel_Buffers.Configure (FB1, 0, 0, 480, 1);
+      GFX.Pixel_Buffers.Configure (FB2, 0, 0, 480, 1);
 
-      GFX.Framebuffers.Clear (FB1);
-      GFX.Framebuffers.Clear (FB2);
+      GFX.Pixel_Buffers.Clear (FB1);
+      GFX.Pixel_Buffers.Clear (FB2);
 
       A0B.ARMv7M.Profiling_Utilities.Initialize;
 
@@ -388,8 +389,8 @@ package body HAQC.GUI is
       From := A0B.ARMv7M.Profiling_Utilities.Get;
 
       for Y in 0 .. GFX.Rasteriser.Device_Pixel_Count (320 - 1) loop
-         GFX.Framebuffers.Configure (FB1, 0, Y, 480, 1);
-         GFX.Framebuffers.Clear (FB1);
+         GFX.Pixel_Buffers.Configure (FB1, 0, Y, 480, 1);
+         GFX.Pixel_Buffers.Clear (FB1);
          Send_Framebuffer (FB1);
       end loop;
 
@@ -398,10 +399,10 @@ package body HAQC.GUI is
 
       --  Draw gree line
 
-      GFX.Framebuffers.Configure (FB2, 100, 100, 20, 20);
+      GFX.Pixel_Buffers.Configure (FB2, 100, 100, 20, 20);
 
       for J in 100 .. GFX.Rasteriser.Device_Pixel_Count (120) loop
-         GFX.Framebuffers.Set
+         GFX.Pixel_Buffers.Set
            (FB2, J, J, GFX.Pixels.ILI9488_18.From_RGB (0, 255, 0));
       end loop;
 
@@ -409,8 +410,8 @@ package body HAQC.GUI is
 
       --  Draw text
 
-      GFX.Framebuffers.Configure (FB2, 200, 170, 200, 45);
-      GFX.Framebuffers.Clear (FB2);
+      GFX.Pixel_Buffers.Configure (FB2, 200, 170, 200, 45);
+      GFX.Pixel_Buffers.Clear (FB2);
       GFX.Rasteriser.Bitmap_Fonts.Draw_Text
         (Framebuffer => FB2,
          Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
@@ -429,8 +430,8 @@ package body HAQC.GUI is
               Integer'Wide_Image (HAQC.UI.Get_CO2);
 
          begin
-            GFX.Framebuffers.Configure (FB2, 200, 170, 200, 45);
-            GFX.Framebuffers.Clear (FB2);
+            GFX.Pixel_Buffers.Configure (FB2, 200, 170, 200, 45);
+            GFX.Pixel_Buffers.Clear (FB2);
             GFX.Rasteriser.Bitmap_Fonts.Draw_Text
               (Framebuffer => FB2,
                Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,

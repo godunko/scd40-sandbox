@@ -8,14 +8,14 @@ pragma Ada_2022;
 
 pragma Restrictions (No_Elaboration_Code);
 
-package body GFX.Framebuffers is
+package body GFX.Generic_Pixel_Buffers_24 is
 
    ------------
    -- Buffer --
    ------------
 
    procedure Buffer
-     (Self    : Framebuffer;
+     (Self    : Pixel_Buffer;
       Address : out System.Address;
       Size    : out GFX.GX_Unsigned) is
    begin
@@ -27,10 +27,9 @@ package body GFX.Framebuffers is
    -- Clear --
    -----------
 
-   procedure Clear (Self : in out Framebuffer) is
+   procedure Clear (Self : in out Pixel_Buffer) is
    begin
-      Self.Data (0 .. Self.Width * Self.Height - 1) :=
-        [others => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 0)];
+      Self.Data (0 .. Self.Width * Self.Height - 1) := [others => 0];
    end Clear;
 
    ---------------
@@ -38,7 +37,7 @@ package body GFX.Framebuffers is
    ---------------
 
    procedure Configure
-     (Self   : in out Framebuffer;
+     (Self   : in out Pixel_Buffer;
       X      : GFX.Rasteriser.Device_Pixel_Index;
       Y      : GFX.Rasteriser.Device_Pixel_Index;
       Width  : GFX.Rasteriser.Device_Pixel_Count;
@@ -63,7 +62,7 @@ package body GFX.Framebuffers is
    ------------
 
    function Height
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count is
+     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count is
    begin
       return GFX.Rasteriser.Device_Pixel_Count (Self.Height);
    end Height;
@@ -73,17 +72,25 @@ package body GFX.Framebuffers is
    ---------
 
    procedure Set
-     (Self  : in out Framebuffer;
+     (Self  : in out Pixel_Buffer;
       X     : GFX.Rasteriser.Device_Pixel_Index;
       Y     : GFX.Rasteriser.Device_Pixel_Index;
-      Value : GFX.Pixels.ILI9488_18.Pixel) is
+      Value : Pixel) is
    begin
       if X in Self.X .. Self.X + GX_Integer (Self.Width) - 1
         and Y in Self.Y .. Self.Y + GX_Integer (Self.Width) - 1
       then
-         Self.Data
-           (GX_Unsigned (Y - Self.Y) * Self.Width
-              + GX_Unsigned (X - Self.X)) := Value;
+         declare
+            Item : Pixel
+              with Import,
+                   Address =>
+                     Self.Data
+                       (GX_Unsigned (Y - Self.Y) * Self.Width
+                          + GX_Unsigned (X - Self.X))'Address;
+
+         begin
+            Item := Value;
+         end;
       end if;
    end Set;
 
@@ -92,7 +99,7 @@ package body GFX.Framebuffers is
    -----------
 
    function Width
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count is
+     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count is
    begin
       return GFX.Rasteriser.Device_Pixel_Count (Self.Width);
    end Width;
@@ -101,7 +108,7 @@ package body GFX.Framebuffers is
    -- X --
    -------
 
-   function X (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   function X (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index is
    begin
       return Self.X;
    end X;
@@ -110,9 +117,9 @@ package body GFX.Framebuffers is
    -- Y --
    -------
 
-   function Y (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index is
+   function Y (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index is
    begin
       return Self.Y;
    end Y;
 
-end GFX.Framebuffers;
+end GFX.Generic_Pixel_Buffers_24;

@@ -13,7 +13,9 @@
 
 pragma Restrictions (No_Elaboration_Code);
 
-package GFX.Pixels.ILI9488_18 is
+package GFX.Pixels.ILI9488_18
+  with Pure
+is
 
    type Pixel is private;
 

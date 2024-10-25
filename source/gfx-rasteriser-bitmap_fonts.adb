@@ -16,7 +16,7 @@ package body GFX.Rasteriser.Bitmap_Fonts is
    ---------------
 
    procedure Draw_Text
-     (Framebuffer : in out GFX.Framebuffers.Framebuffer;
+     (Framebuffer : in out GFX.Pixel_Buffers.Pixel_Buffer;
       Font        : SCD40_Sandbox.Fonts.Font_Descriptor;
       Color       : GFX.Pixels.ILI9488_18.Pixel;
       X           : GFX.Rasteriser.Device_Pixel_Index;
@@ -61,7 +61,7 @@ package body GFX.Rasteriser.Bitmap_Fonts is
 
             for J in 0 .. 7 loop
                if (Aux and 2#1000_0000#) /= 0 then
-                  GFX.Framebuffers.Set
+                  GFX.Pixel_Buffers.Set
                     (Self  => Framebuffer,
                      X     => GFX.Rasteriser.Device_Pixel_Index (XC),
                      Y     => GFX.Rasteriser.Device_Pixel_Index (YC),

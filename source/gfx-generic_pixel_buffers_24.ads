@@ -4,29 +4,28 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
---  Generic framebuffer for 18-bit color format for ILI9488 display
---
---  RRRRRR.. GGGGGG.. BBBBBB..
---
---  bits marked by '.' are ignored by the display, thus used to store 6 bit
---  alpha value.
+--  Generic pixel buffer for 24-bit per pixel
 
 pragma Restrictions (No_Elaboration_Code);
 
 with System;
 
-with GFX.Pixels.ILI9488_18;
 with GFX.Rasteriser;
 
-package GFX.Framebuffers is
+generic
+   type Pixel is private;
 
-   type Framebuffer (Capacity : GFX.GX_Unsigned) is limited private;
+package GFX.Generic_Pixel_Buffers_24
+  with Preelaborate
+is
+
+   type Pixel_Buffer (Capacity : GFX.GX_Unsigned) is limited private;
    --  @component Capacity  Number of pixel to be reserved minus one.
 
-   procedure Clear (Self : in out Framebuffer);
+   procedure Clear (Self : in out Pixel_Buffer);
 
    procedure Configure
-     (Self   : in out Framebuffer;
+     (Self   : in out Pixel_Buffer;
       X      : GFX.Rasteriser.Device_Pixel_Index;
       Y      : GFX.Rasteriser.Device_Pixel_Index;
       Width  : GFX.Rasteriser.Device_Pixel_Count;
@@ -37,38 +36,41 @@ package GFX.Framebuffers is
          and GX_Unsigned (Width) * GX_Unsigned (Height) <= Self.Capacity + 1;
 
    procedure Buffer
-     (Self    : Framebuffer;
+     (Self    : Pixel_Buffer;
       Address : out System.Address;
       Size    : out GFX.GX_Unsigned);
 
    procedure Set
-     (Self  : in out Framebuffer;
+     (Self  : in out Pixel_Buffer;
       X     : GFX.Rasteriser.Device_Pixel_Index;
       Y     : GFX.Rasteriser.Device_Pixel_Index;
-      Value : GFX.Pixels.ILI9488_18.Pixel);
+      Value : Pixel);
 
-   function X (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+   function X (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index;
 
-   function Y (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Index;
+   function Y (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Index;
 
    function Width
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count;
+     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count;
 
    function Height
-     (Self : Framebuffer) return GFX.Rasteriser.Device_Pixel_Count;
+     (Self : Pixel_Buffer) return GFX.Rasteriser.Device_Pixel_Count;
 
 private
 
-   type Pixel_Array is
-     array (GFX.GX_Unsigned range <>) of GFX.Pixels.ILI9488_18.Pixel
-       with Pack;
+   type Item is mod 2 ** 24 with Size => 24;
 
-   type Framebuffer (Capacity : GFX.GX_Unsigned) is limited record
-      Data   : Pixel_Array (0 .. Capacity);
+   pragma Assert (Pixel'Size = Item'Size);
+
+   type Item_Array is array (GFX.GX_Unsigned range <>) of Item
+     with Component_Size => 24;
+
+   type Pixel_Buffer (Capacity : GFX.GX_Unsigned) is limited record
+      Data   : Item_Array (0 .. Capacity);
       X      : GFX.GX_Integer;
       Y      : GFX.GX_Integer;
       Width  : GFX.GX_Unsigned;
       Height : GFX.GX_Unsigned;
    end record;
 
-end GFX.Framebuffers;
+end GFX.Generic_Pixel_Buffers_24;
