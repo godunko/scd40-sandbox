@@ -6,6 +6,7 @@
 
 pragma Restrictions (No_Elaboration_Code);
 
+with GFX.Pixels.ILI9488_18;
 with GFX.Framebuffers;
 with SCD40_Sandbox.Fonts;
 
@@ -14,7 +15,7 @@ package GFX.Rasteriser.Bitmap_Fonts is
    procedure Draw_Text
      (Framebuffer : in out GFX.Framebuffers.Framebuffer;
       Font        : SCD40_Sandbox.Fonts.Font_Descriptor;
-      Color       : GFX.Framebuffers.Pixel;
+      Color       : GFX.Pixels.ILI9488_18.Pixel;
       X           : GFX.Rasteriser.Device_Pixel_Index;
       Y           : GFX.Rasteriser.Device_Pixel_Index;
       Text        : Wide_String);

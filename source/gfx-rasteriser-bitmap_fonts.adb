@@ -18,7 +18,7 @@ package body GFX.Rasteriser.Bitmap_Fonts is
    procedure Draw_Text
      (Framebuffer : in out GFX.Framebuffers.Framebuffer;
       Font        : SCD40_Sandbox.Fonts.Font_Descriptor;
-      Color       : GFX.Framebuffers.Pixel;
+      Color       : GFX.Pixels.ILI9488_18.Pixel;
       X           : GFX.Rasteriser.Device_Pixel_Index;
       Y           : GFX.Rasteriser.Device_Pixel_Index;
       Text        : Wide_String)

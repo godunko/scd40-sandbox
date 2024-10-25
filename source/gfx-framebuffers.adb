@@ -29,7 +29,8 @@ package body GFX.Framebuffers is
 
    procedure Clear (Self : in out Framebuffer) is
    begin
-      Self.Data (0 .. Self.Width * Self.Height - 1) := [others => 0];
+      Self.Data (0 .. Self.Width * Self.Height - 1) :=
+        [others => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 0)];
    end Clear;
 
    ---------------
@@ -57,22 +58,6 @@ package body GFX.Framebuffers is
       Self.Height := GFX.GX_Unsigned (Height);
    end Configure;
 
-   --------------
-   -- From_RGB --
-   --------------
-
-   function From_RGB
-     (R : Interfaces.Unsigned_8;
-      G : Interfaces.Unsigned_8;
-      B : Interfaces.Unsigned_8) return Pixel is
-   begin
-      return
-        Pixel
-          (GX_Unsigned (R) * 2 ** 16
-           or GX_Unsigned (G) * 2 ** 8
-           or GX_Unsigned (B));
-   end From_RGB;
-
    ------------
    -- Height --
    ------------
@@ -91,7 +76,7 @@ package body GFX.Framebuffers is
      (Self  : in out Framebuffer;
       X     : GFX.Rasteriser.Device_Pixel_Index;
       Y     : GFX.Rasteriser.Device_Pixel_Index;
-      Value : Pixel) is
+      Value : GFX.Pixels.ILI9488_18.Pixel) is
    begin
       if X in Self.X .. Self.X + GX_Integer (Self.Width) - 1
         and Y in Self.Y .. Self.Y + GX_Integer (Self.Width) - 1

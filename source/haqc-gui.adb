@@ -16,6 +16,7 @@ with A0B.Tasking;
 with A0B.Types.Arrays;
 
 with GFX.Framebuffers;
+with GFX.Pixels.ILI9488_18;
 with GFX.Rasteriser.Bitmap_Fonts;
 
 with HAQC.Configuration.Board;
@@ -401,7 +402,7 @@ package body HAQC.GUI is
 
       for J in 100 .. GFX.Rasteriser.Device_Pixel_Count (120) loop
          GFX.Framebuffers.Set
-           (FB2, J, J, GFX.Framebuffers.From_RGB (0, 255, 0));
+           (FB2, J, J, GFX.Pixels.ILI9488_18.From_RGB (0, 255, 0));
       end loop;
 
       Send_Framebuffer (FB2);
@@ -413,7 +414,7 @@ package body HAQC.GUI is
       GFX.Rasteriser.Bitmap_Fonts.Draw_Text
         (Framebuffer => FB2,
          Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
-         Color       => GFX.Framebuffers.From_RGB (0, 0, 255),
+         Color       => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 255),
          X           => 200,
          Y           => 200,
          Text        => "Hello, SCD40!");
@@ -433,7 +434,7 @@ package body HAQC.GUI is
             GFX.Rasteriser.Bitmap_Fonts.Draw_Text
               (Framebuffer => FB2,
                Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
-               Color       => GFX.Framebuffers.From_RGB (0, 0, 255),
+               Color       => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 255),
                X           => 200,
                Y           => 200,
                Text        => Image);
