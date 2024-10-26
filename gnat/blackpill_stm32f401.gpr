@@ -31,6 +31,8 @@ project BlackPill_STM32F401 is
         SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches
         & ("-O2", "-gnaty-B");
 
+      for Switches ("a-retico.adb") use
+        SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
       for Switches ("s-wchcnv.adb") use
         SDC40_Sandbox_BlackPill_STM32F401_Config.Ada_Compiler_Switches & ("-O2", "-gnatg");
       for Switches ("s-wchcon.adb") use
