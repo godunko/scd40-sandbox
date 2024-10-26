@@ -18,6 +18,7 @@ with A0B.Types.Arrays;
 
 with HAQC.Configuration.Board;
 with HAQC.Configuration.Sensors;
+with HAQC.Sensors.BME280;
 
 package body HAQC.Sensors.SCD40 is
 
@@ -49,6 +50,13 @@ package body HAQC.Sensors.SCD40 is
       Retry_Delay   : Ada.Real_Time.Time_Span;
       Success       : in out Boolean);
 
+   procedure Write_Retry
+     (Command     : A0B.I2C.SCD40.SCD40_Command;
+      Input       : A0B.Types.Arrays.Unsigned_8_Array;
+      Status      : aliased out A0B.I2C.SCD40.Transaction_Status;
+      Retry_Delay : Ada.Real_Time.Time_Span;
+      Success     : in out Boolean);
+
    procedure Get_Serial_Number (Success : in out Boolean; Reset : out Boolean);
    --  Reading out the serial number can be used to identify the chip and to
    --  verify the presence of the sensor. The get_serial_number command returns
@@ -76,6 +84,22 @@ package body HAQC.Sensors.SCD40 is
    --  the read transfer with a NACK followed by a STOP condition after any
    --  data byte if the user is not interested in subsequent data.
 
+   procedure Get_Ambient_Pressure (Success : in out Boolean);
+   --  The get_ambient_pressure command can be sent during periodic
+   --  measurements to read out the previously saved ambient pressure value
+   --  set by the set_ambient_pressure command.
+
+   procedure Set_Ambient_Pressure
+     (To      : A0B.Types.Unsigned_32;
+      Success : in out Boolean);
+   --  The set_ambient_pressure command can be sent during periodic
+   --  measurements to enable continuous pressure compensation. Note that
+   --  setting an ambient pressure overrides any pressure compensation based
+   --  on a previously set sensor altitude. Use of this command is highly
+   --  recommended for applications experiencing significant ambient pressure
+   --  changes to ensure sensor accuracy. Valid input values are between
+   --  70’000 – 120’000 Pa. The default value is 101’300 Pa.
+
    --  procedure Reinit;
    --  The reinit command reinitializes the sensor by reloading user
    --  settings from EEPROM. Before sending the reinit command, the
@@ -93,6 +117,44 @@ package body HAQC.Sensors.SCD40 is
    CO2 : A0B.Types.Unsigned_16 := 0 with Volatile;
    T   : A0B.Types.Unsigned_16 := 0 with Volatile;
    RH  : A0B.Types.Unsigned_16 := 0 with Volatile;
+   P   : A0B.Types.Unsigned_32 := 0 with Volatile;
+
+   --------------------------
+   -- Get_Ambient_Pressure --
+   --------------------------
+
+   procedure Get_Ambient_Pressure (Success : in out Boolean) is
+      Response : A0B.SCD40.Get_Ambient_Pressure_Response;
+      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
+
+   begin
+      if not Success then
+         return;
+      end if;
+
+      Read_Retry
+        (Command       => A0B.SCD40.Get_Ambient_Pressure,
+         Response      => Response,
+         Command_Delay => Ada.Real_Time.Milliseconds (1),
+         Status        => Status,
+         Retry_Delay   => Retry_Delay,
+         Success       => Success);
+      --  Success := @ and then Status.State = A0B.Success;
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      if not (Status.State = A0B.Success) then
+         raise Program_Error;
+      end if;
+
+      A0B.SCD40.Parse_Get_Ambient_Pressure (Response, P, Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+   end Get_Ambient_Pressure;
 
    -------------
    -- Get_CO2 --
@@ -138,6 +200,15 @@ package body HAQC.Sensors.SCD40 is
 
       return Ready;
    end Get_Data_Ready_Status;
+
+   -----------
+   -- Get_P --
+   -----------
+
+   function Get_P return Integer is
+   begin
+      return Integer (P);
+   end Get_P;
 
    ------------
    -- Get_RH --
@@ -316,6 +387,42 @@ package body HAQC.Sensors.SCD40 is
       end loop;
    end Send_Command_Retry;
 
+   --------------------------
+   -- Set_Ambient_Pressure --
+   --------------------------
+
+   procedure Set_Ambient_Pressure
+     (To      : A0B.Types.Unsigned_32;
+      Success : in out Boolean)
+   is
+      Input  : A0B.SCD40.Set_Ambient_Pressure_Input;
+      Status : aliased A0B.I2C.SCD40.Transaction_Status;
+
+   begin
+      if not Success then
+         return;
+      end if;
+
+      A0B.SCD40.Build_Set_Ambient_Pressure_Input (Input, To);
+
+      Write_Retry
+        (Command     => A0B.SCD40.Set_Ambient_Pressure,
+         Input       => Input,
+         Status      => Status,
+         Retry_Delay => Retry_Delay,
+         Success     => Success);
+
+      if not Success then
+         raise Program_Error;
+      end if;
+
+      if not (Status.State = A0B.Success) then
+         raise Program_Error;
+      end if;
+
+      delay until Ada.Real_Time.Clock + Ada.Real_Time.Milliseconds (1);
+   end Set_Ambient_Pressure;
+
    --------------------------------
    -- Start_Periodic_Measurement --
    --------------------------------
@@ -402,6 +509,8 @@ package body HAQC.Sensors.SCD40 is
 
          --  Configure sensore.
 
+         Get_Ambient_Pressure (Success);
+
          --  Start periodic measurement.
 
          Start_Periodic_Measurement (Success);
@@ -416,8 +525,6 @@ package body HAQC.Sensors.SCD40 is
 
                Read_Measurement (Success);
 
-               exit when not Success;
-
             else
                exit when not Success;
 
@@ -427,11 +534,28 @@ package body HAQC.Sensors.SCD40 is
             if Miss > 10 then
                raise Program_Error;
             end if;
+
+            declare
+               use type A0B.Types.Integer_32;
+
+               BME_P : constant A0B.Types.Unsigned_32 :=
+                 A0B.Types.Unsigned_32 (HAQC.Sensors.BME280.Pressure);
+
+            begin
+               if abs (A0B.Types.Integer_32 (P) - A0B.Types.Integer_32 (BME_P))
+                 > 100
+               then
+                  Set_Ambient_Pressure (BME_P, Success);
+                  Get_Ambient_Pressure (Success);
+               end if;
+            end;
+
+            exit when not Success;
          end loop;
 
          delay until Ada.Real_Time.Clock + Ada.Real_Time.Seconds (1);
       end loop;
-      --
+
       --  Console.Put_Line
       --    ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Serial));
       --
@@ -516,37 +640,38 @@ package body HAQC.Sensors.SCD40 is
    -- Write_Retry --
    -----------------
 
-   --  procedure Write_Retry
-   --    (Address     : A0B.I2C.Device_Drivers_8.Register_Address;
-   --     Buffer      : A0B.Types.Arrays.Unsigned_8_Array;
-   --     Status      : aliased out A0B.I2C.Device_Drivers_8.Transaction_Status;
-   --     Retry_Delay : Ada.Real_Time.Time_Span;
-   --     Success     : in out Boolean)
-   --  is
-   --     Await : aliased A0B.Awaits.Await;
-   --
-   --  begin
-   --     if not Success then
-   --        return;
-   --     end if;
-   --
-   --     for Retry in 0 .. 4 loop
-   --        Sensor.Write
-   --          (Address      => Address,
-   --           Buffer       => Buffer,
-   --           Status       => Status,
-   --           On_Completed => A0B.Awaits.Create_Callback (Await),
-   --           Success      => Success);
-   --        A0B.Awaits.Suspend_Until_Callback (Await, Success);
-   --
-   --        if not Success or Status.State /= A0B.Success then
-   --           raise Program_Error;
-   --        end if;
-   --
-   --        exit when Success;
-   --
-   --        delay until Ada.Real_Time.Clock + Retry_Delay;
-   --     end loop;
-   --  end Write_Retry;
-   --
+   procedure Write_Retry
+     (Command     : A0B.I2C.SCD40.SCD40_Command;
+      Input       : A0B.Types.Arrays.Unsigned_8_Array;
+      Status      : aliased out A0B.I2C.SCD40.Transaction_Status;
+      Retry_Delay : Ada.Real_Time.Time_Span;
+      Success     : in out Boolean)
+   is
+      Await : aliased A0B.Awaits.Await;
+
+   begin
+      if not Success then
+         return;
+      end if;
+
+      for Retry in 0 .. 4 loop
+         Sensor.Write
+           (Command      => Command,
+            Input        => Input,
+            Status       => Status,
+            On_Completed => A0B.Awaits.Create_Callback (Await),
+            Success      => Success);
+         A0B.Awaits.Suspend_Until_Callback (Await, Success);
+
+         if not Success or Status.State /= A0B.Success then
+            raise Program_Error;
+         end if;
+
+         exit when Success;
+
+         delay until Ada.Real_Time.Clock + Retry_Delay;
+         Success := True;
+      end loop;
+   end Write_Retry;
+
 end HAQC.Sensors.SCD40;

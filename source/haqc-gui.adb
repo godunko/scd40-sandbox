@@ -476,6 +476,26 @@ package body HAQC.GUI is
 
          declare
             Image : constant Wide_String :=
+              Integer'Wide_Image (HAQC.Sensors.SCD40.Get_P);
+            X : constant := 240;
+            Y : constant := 150;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
               Integer'Wide_Image (HAQC.Sensors.SCD40.Get_CO2);
             X : constant := 240;
             Y : constant := 200;

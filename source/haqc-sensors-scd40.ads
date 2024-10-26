@@ -38,4 +38,6 @@ package HAQC.Sensors.SCD40 is
 
    function Get_RH return Integer;
 
+   function Get_P return Integer;
+
 end HAQC.Sensors.SCD40;
