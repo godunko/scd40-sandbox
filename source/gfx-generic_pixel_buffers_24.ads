@@ -24,7 +24,9 @@ is
    type Pixel_Buffer (Capacity : GFX.GX_Unsigned) is limited private;
    --  @component Capacity  Number of pixel to be reserved minus one.
 
-   procedure Clear (Self : in out Pixel_Buffer);
+   procedure Fill
+     (Self : in out Pixel_Buffer;
+      To   : Pixel);
 
    procedure Configure
      (Self         : in out Pixel_Buffer;

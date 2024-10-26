@@ -4,11 +4,14 @@
 --  SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 --
 
+pragma Restrictions (No_Elaboration_Code);
 pragma Ada_2022;
 
-pragma Restrictions (No_Elaboration_Code);
+with Ada.Unchecked_Conversion;
 
 package body GFX.Generic_Pixel_Buffers_24 is
+
+   function To_Item is new Ada.Unchecked_Conversion (Pixel, Item);
 
    ------------
    -- Bottom --
@@ -31,15 +34,6 @@ package body GFX.Generic_Pixel_Buffers_24 is
       Address := Self.Data'Address;
       Size    := Self.Columns * Self.Rows * 3;
    end Buffer;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Self : in out Pixel_Buffer) is
-   begin
-      Self.Data (0 .. Self.Columns * Self.Rows - 1) := [others => 0];
-   end Clear;
 
    -------------
    -- Columns --
@@ -87,6 +81,20 @@ package body GFX.Generic_Pixel_Buffers_24 is
    end Configure;
 
    ----------
+   -- Fill --
+   ----------
+
+   procedure Fill
+     (Self : in out Pixel_Buffer;
+      To   : Pixel) is
+   begin
+      if Self.Columns /= 0 and Self.Rows /= 0 then
+         Self.Data (0 .. Self.Columns * Self.Rows - 1) :=
+           [others => To_Item (To)];
+      end if;
+   end Fill;
+
+   ----------
    -- Left --
    ----------
 
@@ -126,17 +134,9 @@ package body GFX.Generic_Pixel_Buffers_24 is
       if X in Self.Clip.Left .. Self.Clip.Right
         and Y in Self.Clip.Top .. Self.Clip.Bottom
       then
-         declare
-            Component : Pixel
-              with Import,
-                   Address =>
-                     Self.Data
-                       (GX_Unsigned (Y - Self.Clip.Top) * Self.Columns
-                          + GX_Unsigned (X - Self.Clip.Left))'Address;
-
-         begin
-            Component := To;
-         end;
+         Self.Data
+           (GX_Unsigned (Y - Self.Clip.Top) * Self.Columns
+              + GX_Unsigned (X - Self.Clip.Left)) := To_Item (To);
       end if;
    end Set;
 
