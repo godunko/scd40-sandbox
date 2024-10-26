@@ -365,17 +365,10 @@ package body HAQC.Sensors.BME280 is
             Success      => Success);
          A0B.Awaits.Suspend_Until_Callback (Await, Success);
 
-         --  if not Success then
-         --     if Status.State /= A0B.Success then
-         --        raise Program_Error;
-         --     end if;
-         --
-         --     --  raise Program_Error;
-         --  end if;
-
          exit when Success;
 
          delay until Ada.Real_Time.Clock + Retry_Delay;
+         Success := True;
       end loop;
    end Read_Retry;
 
@@ -487,6 +480,7 @@ package body HAQC.Sensors.BME280 is
          exit when Success;
 
          delay until Ada.Real_Time.Clock + Retry_Delay;
+         Success := True;
       end loop;
    end Write_Retry;
 
