@@ -6,35 +6,23 @@
 
 package HAQC.Sensors.BME280 is
 
-   --  type Deci_Celsius is delta 1.0 / 2 ** 9 range -99_0.00 .. 99_0.00;
-   --  --  1 degree celsius is 10 Deci_Celsius
-   --
-   --  function Temperature
-   --    (Value       : Measurement;
-   --     Calibration : Calibration_Constants) return Deci_Celsius;
-   --  --  Get the temperature from raw values in 0.1 Celsius
-   --
-   --  Humidity_Small : constant := 1.0 / 2 ** 10;
-   --
-   --  type Relative_Humidity is delta Humidity_Small range 0.0 .. 100.0;
-   --  --  Relative humidity in percent
-   --
-   --  function Humidity
-   --    (Value       : Measurement;
-   --     Temperature : Deci_Celsius;
-   --     Calibration : Calibration_Constants) return Relative_Humidity;
-   --  --  Get the humidity from raw values
-   --
-   --  Pressure_Small : constant := 1.0 / 2 ** 8;
-   --
-   --  type Pressure_Pa is delta Pressure_Small range 30_000.0 .. 110_000.0;
-   --  --  Pressure in Pa
-
    type Temperature_Type is delta 1.0 / 100.0 range -99.0 .. 99.0;
 
    type Relative_Humidity_Type is delta 1.0 / 2 ** 10 range 0.0 .. 100.0;
 
    type Pressure_Type is delta 1.0 / 2 ** 8 range 30_000.0 .. 110_000.0;
+
+   type Measurement_Type (Valid : Boolean := False) is record
+      case Valid is
+         when False =>
+            null;
+
+         when True =>
+            Temperature       : Temperature_Type;
+            Relative_Humidity : Relative_Humidity_Type;
+            Pressure          : Pressure_Type;
+      end case;
+   end record;
 
    function Temperature return Temperature_Type;
 

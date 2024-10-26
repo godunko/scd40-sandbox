@@ -21,6 +21,7 @@ with GFX.Rasteriser.Bitmap_Fonts;
 
 with HAQC.Configuration.Board;
 with HAQC.UI;
+with HAQC.Sensors.BME280;
 --  with HAQC.Configuration.Sensors;
 with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 
@@ -304,16 +305,24 @@ package body HAQC.GUI is
    procedure Task_Subprogram is
 
       use type Ada.Real_Time.Time;
+      use type GFX.GX_Integer;
 
       From  : A0B.ARMv7M.Profiling_Utilities.Stamp;
       To    : A0B.ARMv7M.Profiling_Utilities.Stamp;
+
+      Background : constant GFX.Pixels.ILI9488_18.Pixel :=
+        GFX.Pixels.ILI9488_18.From_RGB (16#12#, 16#12#, 16#12#);
+      Surface    : constant GFX.Pixels.ILI9488_18.Pixel :=
+        GFX.Pixels.ILI9488_18.From_RGB (16#2C#, 16#2C#, 16#2C#);
+      Text       : constant GFX.Pixels.ILI9488_18.Pixel :=
+        GFX.Pixels.ILI9488_18.From_RGB (16#E3#, 16#E3#, 16#E3#);
 
    begin
       GFX.Pixel_Buffers.Configure (FB1, (0, 0), (479, 0));
       GFX.Pixel_Buffers.Configure (FB2, (0, 0), (479, 0));
 
-      GFX.Pixel_Buffers.Clear (FB1);
-      GFX.Pixel_Buffers.Clear (FB2);
+      GFX.Pixel_Buffers.Fill (FB1, Background);
+      GFX.Pixel_Buffers.Fill (FB2, Background);
 
       A0B.ARMv7M.Profiling_Utilities.Initialize;
 
@@ -385,7 +394,7 @@ package body HAQC.GUI is
 
       for Y in 0 .. GFX.Rasteriser.Device_Pixel_Count (320 - 1) loop
          GFX.Pixel_Buffers.Configure (FB1, (0, Y), (479, Y));
-         GFX.Pixel_Buffers.Clear (FB1);
+         GFX.Pixel_Buffers.Fill (FB1, Background);
          Send_Framebuffer (FB1);
       end loop;
 
@@ -405,34 +414,145 @@ package body HAQC.GUI is
 
       --  Draw text
 
-      GFX.Pixel_Buffers.Configure (FB2, (200, 170), (399, 214));
-      GFX.Pixel_Buffers.Clear (FB2);
-      GFX.Rasteriser.Bitmap_Fonts.Draw_Text
-        (Framebuffer => FB2,
-         Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
-         Color       => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 255),
-         X           => 200,
-         Y           => 200,
-         Text        => "Hello, SCD40!");
+      declare
+         X : constant := 240;
+         Y : constant := 50;
 
-      Send_Framebuffer (FB2);
+      begin
+         GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+         GFX.Pixel_Buffers.Fill (FB2, Surface);
+         GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+           (Framebuffer => FB2,
+            Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+            Color       => Text,
+            X           => X,
+            Y           => Y,
+            Text        => "Hello, SCD40!");
+
+         Send_Framebuffer (FB2);
+      end;
 
       loop
          delay until Ada.Real_Time.Clock + Ada.Real_Time.Seconds (1);
 
          declare
             Image : constant Wide_String :=
-              Integer'Wide_Image (HAQC.UI.Get_CO2);
+              Integer'Wide_Image (HAQC.UI.Get_T);
+            X : constant := 240;
+            Y : constant := 50;
 
          begin
-            GFX.Pixel_Buffers.Configure (FB2, (200, 170), (399, 214));
-            GFX.Pixel_Buffers.Clear (FB2);
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
             GFX.Rasteriser.Bitmap_Fonts.Draw_Text
               (Framebuffer => FB2,
                Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
-               Color       => GFX.Pixels.ILI9488_18.From_RGB (0, 0, 255),
-               X           => 200,
-               Y           => 200,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
+              Integer'Wide_Image (HAQC.UI.Get_RH);
+            X : constant := 240;
+            Y : constant := 100;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
+              Integer'Wide_Image (HAQC.UI.Get_CO2);
+            X : constant := 240;
+            Y : constant := 200;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
+              HAQC.Sensors.BME280.Temperature_Type'Wide_Image
+                (HAQC.Sensors.BME280.Temperature);
+            X : constant := 20;
+            Y : constant := 50;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
+              HAQC.Sensors.BME280.Relative_Humidity_Type'Wide_Image
+                (HAQC.Sensors.BME280.Relative_Humidity);
+            X : constant := 20;
+            Y : constant := 100;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
+               Text        => Image);
+
+            Send_Framebuffer (FB2);
+         end;
+
+         declare
+            Image : constant Wide_String :=
+              HAQC.Sensors.BME280.Pressure_Type'Wide_Image
+                (HAQC.Sensors.BME280.Pressure);
+            X : constant := 20;
+            Y : constant := 150;
+
+         begin
+            GFX.Pixel_Buffers.Configure (FB2, (X, Y - 35), (X + 199, Y + 5));
+            GFX.Pixel_Buffers.Fill (FB2, Surface);
+            GFX.Rasteriser.Bitmap_Fonts.Draw_Text
+              (Framebuffer => FB2,
+               Font        => SCD40_Sandbox.Fonts.DejaVuSansCondensed_32.Font,
+               Color       => Text,
+               X           => X,
+               Y           => Y,
                Text        => Image);
 
             Send_Framebuffer (FB2);

@@ -12,4 +12,8 @@ package HAQC.UI is
 
    function Get_CO2 return Integer;
 
+   function Get_T return Integer;
+
+   function Get_RH return Integer;
+
 end HAQC.UI;

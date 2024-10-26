@@ -190,6 +190,15 @@ package body HAQC.UI is
       return Ready;
    end Get_Data_Ready_Status;
 
+   ------------
+   -- Get_RH --
+   ------------
+
+   function Get_RH return Integer is
+   begin
+      return Integer (RH);
+   end Get_RH;
+
    -----------------------
    -- Get_Serial_Number --
    -----------------------
@@ -226,6 +235,15 @@ package body HAQC.UI is
 
       --  Delay_For (A0B.Time.Milliseconds (1));
    end Get_Serial_Number;
+
+   -----------
+   -- Get_T --
+   -----------
+
+   function Get_T return Integer is
+   begin
+      return Integer (T);
+   end Get_T;
 
    ---------------------------
    -- Perform_Factory_Reset --
@@ -450,9 +468,9 @@ package body HAQC.UI is
          Success := True;
          Stop_Periodic_Measurement (Success);
 
-         if not Success then
-            raise Program_Error;
-         end if;
+         --  if not Success then
+         --     raise Program_Error;
+         --  end if;
       end loop;
 
       Console.Put_Line
