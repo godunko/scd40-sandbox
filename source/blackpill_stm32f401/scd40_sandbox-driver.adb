@@ -24,6 +24,7 @@ with HAQC.Configuration.Board;
 --  with SCD40_Sandbox.SCD40;
 --  with SCD40_Sandbox.System_Clocks;
 --  with SCD40_Sandbox.Touch;
+with HAQC.Sensors.BME280;
 with HAQC.UI;
 with HAQC.GUI;
 
@@ -40,6 +41,7 @@ begin
 
    HAQC.Configuration.Board.Initialize;
 
+   HAQC.Sensors.BME280.Register_Task;
    HAQC.UI.Register_Task;
    HAQC.GUI.Register_Task;
 

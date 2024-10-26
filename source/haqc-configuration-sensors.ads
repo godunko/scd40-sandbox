@@ -11,7 +11,7 @@ package HAQC.Configuration.Sensors is
    pragma Preelaborate;
 
    SCD40_I2C_Address  : constant A0B.I2C.Device_Address := 16#62#;
-   --  BME280_I2C_Address : constant A0B.I2C.Device_Address := 16#76#;
+   BME280_I2C_Address : constant A0B.I2C.Device_Address := 16#76#;
    --  BH1750_I2C_Address : constant A0B.I2C.Device_Address := 16#23#;
 
 end HAQC.Configuration.Sensors;
