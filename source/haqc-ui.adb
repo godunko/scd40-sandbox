@@ -7,56 +7,19 @@
 pragma Ada_2022;
 
 with A0B.Awaits;
-with A0B.I2C.SCD40;
-with A0B.SCD40;
 with A0B.STM32F401.USART;
 with A0B.Time.Clock;
 with A0B.Tasking;
-with A0B.Types;
 
 with HAQC.Configuration.Board;
-with HAQC.Configuration.Sensors;
+--  with HAQC.Configuration.Sensors;
+with HAQC.Sensors.SCD40;
 
 package body HAQC.UI is
-
-   SCD40_Sensor : A0B.I2C.SCD40.SCD40_Driver
-     (Controller => HAQC.Configuration.Board.I2C'Access,
-      Address    => HAQC.Configuration.Sensors.SCD40_I2C_Address);
 
    TCB : aliased A0B.Tasking.Task_Control_Block;
 
    procedure Task_Subprogram;
-
-   procedure Get_Serial_Number
-     (Serial  : out A0B.SCD40.Serial_Number;
-      Success : in out Boolean);
-   --  Reading out the serial number can be used to identify the chip and to
-   --  verify the presence of the sensor. The get_serial_number command returns
-   --  3 words, and every word is followed by an 8-bit CRC checksum. Together,
-   --  the 3 words constitute a unique serial number with a length of 48 bits
-   --  (big endian format).
-
-   procedure Start_Periodic_Measurement;
-   --  Start periodic measurement mode. The signal update interval is 5
-   --  seconds.
-
-   procedure Stop_Periodic_Measurement (Success : in out Boolean);
-   --  Stop periodic measurement mode to change the sensor configuration or to
-   --  save power.
-   --
-   --  Note that the sensor will only respond to other commands 500 ms after
-   --  the stop_periodic_measurement command has been issued.
-
-   procedure Reinit;
-   --  The reinit command reinitializes the sensor by reloading user
-   --  settings from EEPROM. Before sending the reinit command, the
-   --  stop_periodic_measurement command must be issued. If the reinit command
-   --  does not trigger the desired re- initialization, a power-cycle should be
-   --  applied to the SCD4x.
-
-   procedure Perform_Factory_Reset;
-   --  The perform_factory_reset command resets all configuration settings
-   --  stored in the EEPROM and erases the FRC and ASC algorithm history.
 
    package Console is
 
@@ -71,10 +34,6 @@ package body HAQC.UI is
    end Console;
 
    procedure Delay_For (T : A0B.Time.Time_Span);
-
-   CO2 : A0B.Types.Unsigned_16 := 0 with Volatile;
-   T   : A0B.Types.Unsigned_16 := 0 with Volatile;
-   RH  : A0B.Types.Unsigned_16 := 0 with Volatile;
 
    -------------
    -- Console --
@@ -150,158 +109,29 @@ package body HAQC.UI is
       A0B.Tasking.Delay_Until (A0B.Time.Clock + T);
    end Delay_For;
 
-   -------------
-   -- Get_CO2 --
-   -------------
-
-   function Get_CO2 return Integer is
-   begin
-      return Integer (CO2);
-   end Get_CO2;
-
-   ---------------------------
-   -- Get_Data_Ready_Status --
-   ---------------------------
-
-   function Get_Data_Ready_Status return Boolean is
-      Response : A0B.SCD40.Get_Data_Ready_Status_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased A0B.Awaits.Await;
-      Success  : Boolean := True;
-      Ready    : Boolean;
-
-   begin
-      SCD40_Sensor.Read
-        (A0B.SCD40.Get_Data_Ready_Status,
-         Response,
-         A0B.Time.Milliseconds (1),
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      A0B.SCD40.Parse_Get_Data_Ready_Status_Response
-        (Response, Ready, Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      return Ready;
-   end Get_Data_Ready_Status;
-
-   ------------
-   -- Get_RH --
-   ------------
-
-   function Get_RH return Integer is
-   begin
-      return Integer (RH);
-   end Get_RH;
-
-   -----------------------
-   -- Get_Serial_Number --
-   -----------------------
-
-   procedure Get_Serial_Number
-     (Serial  : out A0B.SCD40.Serial_Number;
-      Success : in out Boolean)
-   is
-      Response : A0B.SCD40.Get_Serial_Number_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased A0B.Awaits.Await;
-
-   begin
-      if not Success then
-         Serial := 0;
-
-         return;
-      end if;
-
-      SCD40_Sensor.Read
-        (A0B.SCD40.Get_Serial_Number,
-         Response,
-         A0B.Time.Milliseconds (1),
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      A0B.SCD40.Parse_Get_Serial_Number_Response (Response, Serial, Success);
-
-      --  if not Success then
-      --     raise Program_Error;
-      --  end if;
-
-      --  Delay_For (A0B.Time.Milliseconds (1));
-   end Get_Serial_Number;
-
-   -----------
-   -- Get_T --
-   -----------
-
-   function Get_T return Integer is
-   begin
-      return Integer (T);
-   end Get_T;
-
    ---------------------------
    -- Perform_Factory_Reset --
    ---------------------------
 
-   procedure Perform_Factory_Reset is
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased A0B.Awaits.Await;
-      Success : Boolean := True;
-
-   begin
-      SCD40_Sensor.Send_Command
-        (A0B.SCD40.Perform_Factory_Reset,
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      Delay_For (A0B.Time.Milliseconds (1_200));
-   end Perform_Factory_Reset;
-
-   ----------------------
-   -- Read_Measurement --
-   ----------------------
-
-   procedure Read_Measurement is
-      Response : A0B.SCD40.Read_Measurement_Response;
-      Status   : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await    : aliased A0B.Awaits.Await;
-      Success  : Boolean := True;
-
-   begin
-      SCD40_Sensor.Read
-        (A0B.SCD40.Read_Measurement,
-         Response,
-         A0B.Time.Milliseconds (1),
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      A0B.SCD40.Parse_Read_Measurement_Response
-        (Response,
-         CO2,
-         T,
-         RH,
-         Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      Delay_For (A0B.Time.Milliseconds (1));
-   end Read_Measurement;
+   --  procedure Perform_Factory_Reset is
+   --     Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+   --     Await   : aliased A0B.Awaits.Await;
+   --     Success : Boolean := True;
+   --
+   --  begin
+   --     SCD40_Sensor.Send_Command
+   --       (A0B.SCD40.Perform_Factory_Reset,
+   --        Status,
+   --        A0B.Awaits.Create_Callback (Await),
+   --        Success);
+   --     A0B.Awaits.Suspend_Until_Callback (Await, Success);
+   --
+   --     if not Success then
+   --        raise Program_Error;
+   --     end if;
+   --
+   --     Delay_For (A0B.Time.Milliseconds (1_200));
+   --  end Perform_Factory_Reset;
 
    -------------------
    -- Register_Task --
@@ -316,25 +146,25 @@ package body HAQC.UI is
    -- Reinit --
    ------------
 
-   procedure Reinit is
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased A0B.Awaits.Await;
-      Success : Boolean := True;
-
-   begin
-      SCD40_Sensor.Send_Command
-        (A0B.SCD40.Reinit,
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      Delay_For (A0B.Time.Milliseconds (30));
-   end Reinit;
+   --  procedure Reinit is
+   --     Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+   --     Await   : aliased A0B.Awaits.Await;
+   --     Success : Boolean := True;
+   --
+   --  begin
+   --     SCD40_Sensor.Send_Command
+   --       (A0B.SCD40.Reinit,
+   --        Status,
+   --        A0B.Awaits.Create_Callback (Await),
+   --        Success);
+   --     A0B.Awaits.Suspend_Until_Callback (Await, Success);
+   --
+   --     if not Success then
+   --        raise Program_Error;
+   --     end if;
+   --
+   --     Delay_For (A0B.Time.Milliseconds (30));
+   --  end Reinit;
 
    --------------------------
    -- Set_Ambient_Pressure --
@@ -368,188 +198,141 @@ package body HAQC.UI is
    -- Set_Sensor_Altitude --
    -------------------------
 
-   procedure Set_Sensor_Altitude (To : A0B.Types.Unsigned_16) is
-      Input   : A0B.SCD40.Set_Sensor_Altitude_Input;
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased A0B.Awaits.Await;
-      Success : Boolean := True;
-
-   begin
-      A0B.SCD40.Build_Set_Sensor_Altitude_Input (Input, To);
-
-      SCD40_Sensor.Write
-        (A0B.SCD40.Set_Sensor_Altitude,
-         Input,
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      Delay_For (A0B.Time.Milliseconds (1));
-   end Set_Sensor_Altitude;
-
-   --------------------------------
-   -- Start_Periodic_Measurement --
-   --------------------------------
-
-   procedure Start_Periodic_Measurement is
-      Status  : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await   : aliased A0B.Awaits.Await;
-      Success : Boolean := True;
-
-   begin
-      SCD40_Sensor.Send_Command
-        (A0B.SCD40.Start_Periodic_Measurement,
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      if not Success then
-         raise Program_Error;
-      end if;
-
-      Delay_For (A0B.Time.Milliseconds (1));
-   end Start_Periodic_Measurement;
-
-   -------------------------------
-   -- Stop_Periodic_Measurement --
-   -------------------------------
-
-   procedure Stop_Periodic_Measurement (Success : in out Boolean) is
-      Status : aliased A0B.I2C.SCD40.Transaction_Status;
-      Await  : aliased A0B.Awaits.Await;
-
-   begin
-      if not Success then
-         return;
-      end if;
-
-      SCD40_Sensor.Send_Command
-        (A0B.SCD40.Stop_Periodic_Measurement,
-         Status,
-         A0B.Awaits.Create_Callback (Await),
-         Success);
-      A0B.Awaits.Suspend_Until_Callback (Await, Success);
-
-      Delay_For (A0B.Time.Milliseconds (500));
-   end Stop_Periodic_Measurement;
+   --  procedure Set_Sensor_Altitude (To : A0B.Types.Unsigned_16) is
+   --     Input   : A0B.SCD40.Set_Sensor_Altitude_Input;
+   --     Status  : aliased A0B.I2C.SCD40.Transaction_Status;
+   --     Await   : aliased A0B.Awaits.Await;
+   --     Success : Boolean := True;
+   --
+   --  begin
+   --     A0B.SCD40.Build_Set_Sensor_Altitude_Input (Input, To);
+   --
+   --     SCD40_Sensor.Write
+   --       (A0B.SCD40.Set_Sensor_Altitude,
+   --        Input,
+   --        Status,
+   --        A0B.Awaits.Create_Callback (Await),
+   --        Success);
+   --     A0B.Awaits.Suspend_Until_Callback (Await, Success);
+   --
+   --     if not Success then
+   --        raise Program_Error;
+   --     end if;
+   --
+   --     Delay_For (A0B.Time.Milliseconds (1));
+   --  end Set_Sensor_Altitude;
 
    ---------------------
    -- Task_Subprogram --
    ---------------------
 
    procedure Task_Subprogram is
-      Serial  : A0B.SCD40.Serial_Number;
-      Success : Boolean := True;
-      Miss    : Natural := 0;
-      Init    : Natural := 0;
+      --  Serial  : A0B.SCD40.Serial_Number;
+      --  Success : Boolean := True;
+      --  Miss    : Natural := 0;
+      --  Init    : Natural := 0;
 
    begin
       Console.New_Line;
       Console.Put_Line ("Home Air Quality Controller");
       Console.New_Line;
 
-      loop
-         --  Get sensor's serial number.
-
-         Success := True;
-         Get_Serial_Number (Serial, Success);
-
-         exit when Success;
-
-         --  Operation fails when sensor is in the periodic measurement mode,
-         --  stop periodic measurement to be able to configure sensor.
-
-         Success := True;
-         Stop_Periodic_Measurement (Success);
-
-         --  if not Success then
-         --     raise Program_Error;
-         --  end if;
-      end loop;
-
-      Console.Put_Line
-        ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Serial));
-
-      --  Configure sensor.
-
-      Set_Sensor_Altitude (428);
-
-      Start_Periodic_Measurement;
+      --  loop
+      --     --  Get sensor's serial number.
+      --
+      --     Success := True;
+      --     Get_Serial_Number (Serial, Success);
+      --
+      --     exit when Success;
+      --
+      --     --  Operation fails when sensor is in the periodic measurement mode,
+      --     --  stop periodic measurement to be able to configure sensor.
+      --
+      --     Success := True;
+      --     Stop_Periodic_Measurement (Success);
+      --
+      --     --  if not Success then
+      --     --     raise Program_Error;
+      --     --  end if;
+      --  end loop;
+      --
+      --  Console.Put_Line
+      --    ("SCD40 S/N:" & A0B.SCD40.Serial_Number'Image (Serial));
+      --
+      --  --  Configure sensor.
+      --
+      --  Set_Sensor_Altitude (428);
+      --
+      --  Start_Periodic_Measurement;
 
       loop
          Delay_For (A0B.Time.Seconds (1));
 
-         if Get_Data_Ready_Status then
-            Miss := 0;
-
-            Read_Measurement;
+         --  if Get_Data_Ready_Status then
+         --     Miss := 0;
+         --
+         --     Read_Measurement;
 
             Console.Put_Line
-              ("T "
-               & A0B.Types.Unsigned_16'Image (T)
-               & "  RH "
-               & A0B.Types.Unsigned_16'Image (RH)
-               & "  CO2 "
-               & A0B.Types.Unsigned_16'Image (CO2));
+              ("T:"
+               & Integer'Image (HAQC.Sensors.SCD40.Get_T)
+               & "  RH:"
+               & Integer'Image (HAQC.Sensors.SCD40.Get_RH)
+               & "  CO2:"
+               & Integer'Image (HAQC.Sensors.SCD40.Get_CO2));
 
-         else
-            Miss := @ + 1;
-            Console.Put ('.');
-         end if;
-
-         if Miss > 10 then
-            --  Too many misses, attempt to restart sensor.
-
-            Init := @ + 1;
-
-            if Init < 5 then
-               Miss := 0;
-               Console.Put_Line (" ... reinit ...");
-
-               --  Stop periodic measurement to be able to configure sensor.
-
-               Success := True;
-               Stop_Periodic_Measurement (Success);
-
-               if not Success then
-                  raise Program_Error;
-               end if;
-
-               --  Reinit sensor
-
-               Reinit;
-
-            else
-               Miss := 0;
-               Init := 0;
-               Console.Put_Line (" ... factory reset ...");
-
-               --  Stop periodic measurement to be able to configure sensor.
-
-               Success := True;
-               Stop_Periodic_Measurement (Success);
-
-               if not Success then
-                  raise Program_Error;
-               end if;
-
-               --  DO factory reset of the sensor.
-
-               Perform_Factory_Reset;
-            end if;
-
-            --  Configure sensor.
-
-            Set_Sensor_Altitude (428);
-
-            Start_Periodic_Measurement;
-         end if;
+         --  else
+         --     Miss := @ + 1;
+         --     Console.Put ('.');
+         --  end if;
+         --
+         --  if Miss > 10 then
+         --     --  Too many misses, attempt to restart sensor.
+         --
+         --     Init := @ + 1;
+         --
+         --     if Init < 5 then
+         --        Miss := 0;
+         --        Console.Put_Line (" ... reinit ...");
+         --
+         --        --  Stop periodic measurement to be able to configure sensor.
+         --
+         --        Success := True;
+         --        Stop_Periodic_Measurement (Success);
+         --
+         --        if not Success then
+         --           raise Program_Error;
+         --        end if;
+         --
+         --        --  Reinit sensor
+         --
+         --        Reinit;
+         --
+         --     else
+         --        Miss := 0;
+         --        Init := 0;
+         --        Console.Put_Line (" ... factory reset ...");
+         --
+         --        --  Stop periodic measurement to be able to configure sensor.
+         --
+         --        Success := True;
+         --        Stop_Periodic_Measurement (Success);
+         --
+         --        if not Success then
+         --           raise Program_Error;
+         --        end if;
+         --
+         --        --  DO factory reset of the sensor.
+         --
+         --        Perform_Factory_Reset;
+         --     end if;
+         --
+         --     --  Configure sensor.
+         --
+         --     Set_Sensor_Altitude (428);
+         --
+         --     Start_Periodic_Measurement;
+         --  end if;
       end loop;
    end Task_Subprogram;
 

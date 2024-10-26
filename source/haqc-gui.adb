@@ -20,9 +20,8 @@ with GFX.Pixels.ILI9488_18;
 with GFX.Rasteriser.Bitmap_Fonts;
 
 with HAQC.Configuration.Board;
-with HAQC.UI;
 with HAQC.Sensors.BME280;
---  with HAQC.Configuration.Sensors;
+with HAQC.Sensors.SCD40;
 with SCD40_Sandbox.Fonts.DejaVuSansCondensed_32;
 
 package body HAQC.GUI is
@@ -437,7 +436,7 @@ package body HAQC.GUI is
 
          declare
             Image : constant Wide_String :=
-              Integer'Wide_Image (HAQC.UI.Get_T);
+              Integer'Wide_Image (HAQC.Sensors.SCD40.Get_T);
             X : constant := 240;
             Y : constant := 50;
 
@@ -457,7 +456,7 @@ package body HAQC.GUI is
 
          declare
             Image : constant Wide_String :=
-              Integer'Wide_Image (HAQC.UI.Get_RH);
+              Integer'Wide_Image (HAQC.Sensors.SCD40.Get_RH);
             X : constant := 240;
             Y : constant := 100;
 
@@ -477,7 +476,7 @@ package body HAQC.GUI is
 
          declare
             Image : constant Wide_String :=
-              Integer'Wide_Image (HAQC.UI.Get_CO2);
+              Integer'Wide_Image (HAQC.Sensors.SCD40.Get_CO2);
             X : constant := 240;
             Y : constant := 200;
 
